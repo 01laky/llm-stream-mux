@@ -1,6 +1,6 @@
 # Testing strategy
 
-**Status:** P0 active — **114** tests in CI via `pnpm verify`.
+**Status:** P0 active — **114** tests in CI via `pnpm verify`. Current release: **`0.0.1`** (P0 scaffold); **`0.1.0`** after P1 per §26.2.
 
 ---
 

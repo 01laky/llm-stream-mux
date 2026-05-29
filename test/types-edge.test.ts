@@ -38,6 +38,10 @@ import {
 
 const root = resolve(fileURLToPath(new URL("..", import.meta.url)));
 
+function readPkgVersion() {
+	return JSON.parse(readFileSync(join(root, "package.json"), "utf8")).version as string;
+}
+
 function handleTagged<T>(tagged: Tagged<T>): "value" | "error" | "done" {
 	switch (tagged.kind) {
 		case "value":
@@ -283,7 +287,7 @@ describe("LSM-TYP extended type edge cases", () => {
 		const dts = readFileSync(join(root, "dist/index.d.ts"), "utf8");
 		expect(dts).toContain("type Source<T>");
 		expect(dts).toContain("declare const MUX_ERROR_CODES");
-		expect(dts).toContain('declare const MUX_PKG_VERSION: "0.0.0"');
+		expect(dts).toContain(`declare const MUX_PKG_VERSION: "${readPkgVersion()}"`);
 		expect(dts).not.toMatch(/export declare function race\b/);
 		expect(dts).not.toContain("fromAsyncIterable");
 		expect(dts).toMatch(/export \{[^}]*type Source,/);

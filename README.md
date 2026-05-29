@@ -1,6 +1,6 @@
 # llm-stream-mux
 
-![version](https://img.shields.io/badge/version-0.0.0-lightgrey)
+![version](https://img.shields.io/badge/version-0.0.1-lightgrey)
 ![node](https://img.shields.io/badge/node-%3E%3D18-339933)
 ![runtime deps](https://img.shields.io/badge/runtime_deps-0-brightgreen)
 ![status](https://img.shields.io/badge/status-P0_types_scaffold-yellow)
@@ -12,7 +12,7 @@
 
 Orchestrate streams — **not another hand-rolled `Promise.race` on fetch**.
 
-**Status:** `0.0.0` — P0 complete (types + build scaffold). Strategies land in P2–P5. Spec: [`docs/proposal.MD`](./docs/proposal.MD).
+**Status:** `0.0.1` — P0 complete (types + build scaffold). **`0.1.0`** after P1 (core internals). Strategies land in P2–P5. Spec: [`docs/proposal.MD`](./docs/proposal.MD).
 
 ---
 

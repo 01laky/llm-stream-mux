@@ -33,4 +33,4 @@ export type {
 export { MUX_ERROR_CODES } from "./types.js";
 
 /** Synced with package.json version — updated at release boundaries. */
-export const MUX_PKG_VERSION = "0.0.0" as const;
+export const MUX_PKG_VERSION = "0.0.1" as const;
