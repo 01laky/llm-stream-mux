@@ -24,6 +24,7 @@ const required = [
 	"scripts/check-diagrams.mjs",
 	"scripts/verify-zero-deps.mjs",
 	"scripts/smoke-package.mjs",
+	"scripts/check-portability.mjs",
 	"scripts/release-prep.mjs",
 	".github/workflows/ci.yml",
 ];

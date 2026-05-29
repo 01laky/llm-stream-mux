@@ -290,6 +290,9 @@ describe("LSM-TYP extended type edge cases", () => {
 		expect(dts).toContain(`declare const MUX_PKG_VERSION: "${readPkgVersion()}"`);
 		expect(dts).not.toMatch(/export declare function race\b/);
 		expect(dts).not.toContain("fromAsyncIterable");
+		expect(dts).toMatch(/declare function collect\b/);
+		expect(dts).toMatch(/declare function toReadable\b/);
+		expect(dts).toMatch(/declare function toAsyncIterable\b/);
 		expect(dts).toMatch(/export \{[^}]*type Source,/);
 	});
 
@@ -445,6 +448,13 @@ describe("LSM-TYP extended type edge cases", () => {
 			expect(body).not.toMatch(/require\s*\(\s*["']\.\/types/);
 			expect(body).not.toMatch(/node_modules/);
 		}
+	});
+
+	it("LSM-TYP-69 CreateMuxError type exported without runtime muxError in d.ts", () => {
+		const dts = readFileSync(join(root, "dist/index.d.ts"), "utf8");
+		expect(dts).toContain("CreateMuxError");
+		expect(dts).not.toMatch(/declare function muxError\b/);
+		expect(dts).not.toMatch(/export \{[^}]*\bmuxError\b/);
 	});
 });
 

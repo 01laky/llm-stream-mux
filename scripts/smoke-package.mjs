@@ -27,23 +27,29 @@ try {
 	writeFileSync(
 		join(temp, "esm.mjs"),
 		`
-import { MUX_PKG_VERSION, MUX_ERROR_CODES } from "llm-stream-mux";
+import { MUX_PKG_VERSION, MUX_ERROR_CODES, collect } from "llm-stream-mux";
 if (MUX_PKG_VERSION !== ${JSON.stringify(version)}) throw new Error("ESM version mismatch");
 if (!Array.isArray(MUX_ERROR_CODES) || MUX_ERROR_CODES.length !== 6) throw new Error("ESM codes");
+const empty = await collect((async function* () {})());
+if (empty.length !== 0) throw new Error("ESM collect");
 `,
 	);
 
 	writeFileSync(
-		join(temp, "cjs.cjs"),
+		join(temp, "cjs.mjs"),
 		`
-const { MUX_PKG_VERSION, MUX_ERROR_CODES } = require("llm-stream-mux");
+import { createRequire } from "node:module";
+const require = createRequire(import.meta.url);
+const { MUX_PKG_VERSION, MUX_ERROR_CODES, collect } = require("llm-stream-mux");
 if (MUX_PKG_VERSION !== ${JSON.stringify(version)}) throw new Error("CJS version mismatch");
 if (!Array.isArray(MUX_ERROR_CODES) || MUX_ERROR_CODES.length !== 6) throw new Error("CJS codes");
+const empty = await collect((async function* () {})());
+if (empty.length !== 0) throw new Error("CJS collect");
 `,
 	);
 
 	execFileSync("node", ["esm.mjs"], { cwd: temp, stdio: "pipe" });
-	execFileSync("node", ["cjs.cjs"], { cwd: temp, stdio: "pipe" });
+	execFileSync("node", ["cjs.mjs"], { cwd: temp, stdio: "pipe" });
 	console.log("OK: package smoke test passed");
 } finally {
 	rmSync(temp, { recursive: true, force: true });

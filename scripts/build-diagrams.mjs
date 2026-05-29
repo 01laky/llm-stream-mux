@@ -14,6 +14,7 @@ const diagrams = [
 	"byte-event-modes.mmd",
 	"merge-tagged.mmd",
 	"public-api-types.mmd",
+	"core-internals.mmd",
 ];
 
 for (const name of diagrams) {

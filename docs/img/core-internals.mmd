@@ -1,0 +1,36 @@
+flowchart TB
+  subgraph public["Public API (0.1.0)"]
+    collect["collect()"]
+    toReadable["toReadable()"]
+    toAsyncIterable["toAsyncIterable()"]
+  end
+
+  subgraph internal["Internal (P1)"]
+    source["normalizeSource / normalizeSources"]
+    abort["combineSignals / timeoutSignal"]
+    errors["muxError()"]
+    telemetry["createTelemetry()"]
+  end
+
+  subgraph sources["Source forms"]
+    rs["ReadableStream via getReader()"]
+    ai["AsyncIterable"]
+    lazy["lazy thunk deferred until next()"]
+  end
+
+  subgraph future["Strategies P2-P5"]
+    tee["tee()"]
+    race["race()"]
+    fb["fallback()"]
+    merge["merge()"]
+  end
+
+  rs --> source
+  ai --> source
+  lazy --> source
+  source --> future
+  abort --> future
+  errors --> future
+  telemetry --> future
+  toAsyncIterable --> rs
+  collect --> ai

@@ -92,3 +92,24 @@ if (MUX_ERROR_CODES.length !== 6) throw new Error("codes");`,
 		}
 	});
 });
+
+describe("LSM-REL-03 dist interop contract", () => {
+	it("LSM-REL-03 dist index.d.ts declares interop helpers", () => {
+		const dts = readFileSync(join(root, "dist/index.d.ts"), "utf8");
+		expect(dts).toMatch(/declare function collect\b/);
+		expect(dts).toMatch(/declare function toReadable\b/);
+		expect(dts).toMatch(/declare function toAsyncIterable\b/);
+		expect(dts).not.toMatch(/declare function muxError\b/);
+		expect(dts).not.toContain("normalizeSource");
+		expect(dts).not.toContain("createTelemetry");
+	});
+
+	it("LSM-REL-03 bundled output exports collect without node_modules", () => {
+		for (const file of ["dist/index.js", "dist/index.cjs"]) {
+			const body = readFileSync(join(root, file), "utf8");
+			expect(body).toContain("collect");
+			expect(body).not.toContain("node_modules");
+			expect(body).not.toMatch(/export \{[^}]*muxError/);
+		}
+	});
+});

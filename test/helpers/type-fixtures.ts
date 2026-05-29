@@ -9,6 +9,14 @@ import type {
 	SourceEventType,
 	Tagged,
 } from "../../src/types.js";
+import {
+	asyncIterableFromArray,
+	controllableReadable,
+	fromArray,
+	readableFromArray,
+} from "./streams.js";
+
+export { controllableReadable, fromArray, readableFromArray, asyncIterableFromArray };
 
 export function muxError(code: MuxErrorCode, init: Partial<MuxError> = {}): MuxError {
 	return Object.assign(new Error(init.message ?? code), { code, ...init });
@@ -37,12 +45,7 @@ export async function* asyncItems<T>(items: T[]): AsyncIterable<T> {
 }
 
 export function readableFrom<T>(items: T[]): ReadableStream<T> {
-	return new ReadableStream<T>({
-		start(controller) {
-			for (const item of items) controller.enqueue(item);
-			controller.close();
-		},
-	});
+	return readableFromArray(items);
 }
 
 export function lazySource<T>(factory: () => Source<T>): Source<T> {

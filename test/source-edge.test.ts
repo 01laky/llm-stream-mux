@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { Source } from "../src/types.js";
 import { asyncItems, lazySource, readableFrom } from "./helpers/type-fixtures.js";
+import { controllableReadable, fromArray, readableFromArray } from "./helpers/streams.js";
 
 /**
  * P0 source-union edge cases — exercises ReadableStream / AsyncIterable / lazy thunks
@@ -64,6 +65,40 @@ describe("LSM-SRC source fixture edge cases", () => {
 		const b = asyncItems(["b1", "b2"]);
 		expect(await collect(a)).toEqual(["a1", "a2"]);
 		expect(await collect(b)).toEqual(["b1", "b2"]);
+	});
+
+	it("LSM-SRC-09 neverEnd async iterable hangs until return cancels generator", async () => {
+		async function* hang(): AsyncGenerator<number> {
+			yield 1;
+			await new Promise<void>(() => {
+				// never resolves until return()
+			});
+		}
+		const iter = hang()[Symbol.asyncIterator]();
+		expect((await iter.next()).value).toBe(1);
+		await expect(iter.return?.()).resolves.toEqual({ done: true, value: undefined });
+	});
+
+	it("LSM-SRC-10 readableFromArray throwAt errors stream consumer at index", async () => {
+		const stream = readableFromArray([1, 2, 3], { throwAt: 1 });
+		const reader = stream.getReader();
+		expect((await reader.read()).value).toBe(1);
+		await expect(reader.read()).rejects.toThrow("throwAt 1");
+	});
+
+	it("LSM-SRC-11 fromArray delayMs does not reorder items", async () => {
+		const { readable, asyncIterable } = fromArray([1, 2, 3], { delayMs: 1 });
+		expect(await collect(readable)).toEqual([1, 2, 3]);
+		expect(await collect(asyncIterable)).toEqual([1, 2, 3]);
+	});
+
+	it("LSM-SRC-12 controllableReadable cancelReason resolves with cancel argument", async () => {
+		const ctrl = controllableReadable<number>();
+		ctrl.enqueue(9);
+		const reader = ctrl.stream.getReader();
+		await reader.read();
+		await reader.cancel("manual-stop");
+		await expect(ctrl.cancelReason).resolves.toBe("manual-stop");
 	});
 });
 

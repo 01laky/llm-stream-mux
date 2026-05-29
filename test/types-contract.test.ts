@@ -34,7 +34,13 @@ import {
 } from "../src/index.js";
 import { readableFrom } from "./helpers/type-fixtures.js";
 
-const PUBLIC_RUNTIME_EXPORTS = ["MUX_ERROR_CODES", "MUX_PKG_VERSION"] as const;
+const PUBLIC_RUNTIME_EXPORTS = [
+	"MUX_ERROR_CODES",
+	"MUX_PKG_VERSION",
+	"collect",
+	"toReadable",
+	"toAsyncIterable",
+] as const;
 
 const ALL_MUX_ERROR_CODES: MuxErrorCode[] = [
 	"SOURCE_ERROR",
@@ -114,12 +120,17 @@ describe("LSM-REL-02 public export contract", () => {
 			"merge",
 			"tee",
 			"ensemble",
-			"collect",
-			"toReadable",
-			"toAsyncIterable",
+			"muxError",
+			"fromAsyncIterable",
 		]) {
 			expect(name in mux, name).toBe(false);
 		}
+	});
+
+	it("LSM-REL-02 interop helpers are functions", () => {
+		expect(typeof mux.collect).toBe("function");
+		expect(typeof mux.toReadable).toBe("function");
+		expect(typeof mux.toAsyncIterable).toBe("function");
 	});
 
 	it("LSM-REL-02 MUX_ERROR_CODES lists every MuxErrorCode exactly once", () => {
