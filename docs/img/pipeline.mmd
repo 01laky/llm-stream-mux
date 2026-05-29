@@ -1,0 +1,58 @@
+flowchart TB
+	subgraph PROVIDERS["Your HTTP layer · fetch / SDK"]
+		direction LR
+		PA["Provider A body"]
+		PB["Provider B body"]
+		PC["Backup model"]
+	end
+
+	subgraph OPTIONAL_PARSE["Optional · userland · no npm coupling"]
+		direction LR
+		ASM["llm-stream-assemble<br/>bytes → StreamEvent"]
+		GRD["llm-stream-guard<br/>filter / redact"]
+	end
+
+	subgraph MUX["llm-stream-mux · generic over T"]
+		direction TB
+		RACE["race()"]
+		FB["fallback()"]
+		MRG["merge() / ensemble()"]
+		TEE["tee()"]
+		TAG(["Tagged&lt;T&gt; or T stream"])
+		RACE --> TAG
+		FB --> TAG
+		MRG --> TAG
+	end
+
+	subgraph APPS["Your application"]
+		direction LR
+		UI["Chat UI · SSE proxy"]
+		AGENT["Multi-model agents"]
+		MET["onSourceEvent · metrics"]
+		ROUTE["Winner routing"]
+	end
+
+	PA --> RACE
+	PB --> RACE
+	PA --> ASM
+	PB --> ASM
+	ASM --> MRG
+	PC --> FB
+	GRD --> MRG
+	TAG --> UI
+	TAG --> AGENT
+	TAG --> ROUTE
+	MRG --> MET
+	TEE --> UI
+
+	classDef provider fill:#0f172a,stroke:#38bdf8,stroke-width:2px,color:#e0f2fe
+	classDef optional fill:#312e81,stroke:#a5b4fc,stroke-width:2px,color:#eef2ff
+	classDef mux fill:#042f2e,stroke:#2dd4bf,stroke-width:2px,color:#ccfbf1
+	classDef io fill:#134e4a,stroke:#5eead4,stroke-width:2px,color:#f0fdfa
+	classDef app fill:#172554,stroke:#60a5fa,stroke-width:2px,color:#dbeafe
+
+	class PA,PB,PC provider
+	class ASM,GRD optional
+	class RACE,FB,MRG,TEE mux
+	class TAG io
+	class UI,AGENT,MET,ROUTE app

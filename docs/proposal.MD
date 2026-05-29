@@ -54,11 +54,11 @@ One-line pitch:
 
 ## 2. Ecosystem context (intent only — NOT a dependency)
 
-| Library                 | Shape | Responsibility |
-| ----------------------- | ----- | -------------- |
-| `llm-stream-assemble`   | 1→1   | Parse ONE raw provider stream (bytes/SSE) into a unified typed event stream. About **FORMAT**. |
+| Library                 | Shape | Responsibility                                                                                                                                                   |
+| ----------------------- | ----- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `llm-stream-assemble`   | 1→1   | Parse ONE raw provider stream (bytes/SSE) into a unified typed event stream. About **FORMAT**.                                                                   |
 | `llm-stream-guard`      | 1→1   | Security filter: redact secrets/PII, tool allow/deny, sanitize errors. Own event model; works with any parser; no hard dependency on assemble. About **SAFETY**. |
-| `llm-stream-mux` (this) | N↔1   | Coordinate multiple streams: race, fallback, ensemble/merge, tee. About **ORCHESTRATION**. |
+| `llm-stream-mux` (this) | N↔1   | Coordinate multiple streams: race, fallback, ensemble/merge, tee. About **ORCHESTRATION**.                                                                       |
 
 ### Shared DNA (all three must follow)
 
@@ -93,12 +93,12 @@ This is the single most important constraint. Every API decision preserves it.
 Optional predicates injected by the user (mirroring how guard accepts a mapper). Defaults work
 purely at stream level (ended / threw):
 
-| Hook | Signature | Purpose | Default |
-| ---- | --------- | ------- | ------- |
-| `isError`  | `(item: T) => boolean` | Detect IN-BAND error frames. Transport errors auto-detected. | Only transport errors count. |
-| `isUsable` | `(item: T) => boolean` | "first usable" for race; commit gate for fallback. | First emitted item. |
-| `isFinal`  | `(item: T) => boolean` | Logical completion signal. | Underlying stream end. |
-| `mapEach`  | `(item: T, source: string) => U` | Per-source transform applied before output/merge (T→U). | Identity. |
+| Hook       | Signature                        | Purpose                                                      | Default                      |
+| ---------- | -------------------------------- | ------------------------------------------------------------ | ---------------------------- |
+| `isError`  | `(item: T) => boolean`           | Detect IN-BAND error frames. Transport errors auto-detected. | Only transport errors count. |
+| `isUsable` | `(item: T) => boolean`           | "first usable" for race; commit gate for fallback.           | First emitted item.          |
+| `isFinal`  | `(item: T) => boolean`           | Logical completion signal.                                   | Underlying stream end.       |
+| `mapEach`  | `(item: T, source: string) => U` | Per-source transform applied before output/merge (T→U).      | Identity.                    |
 
 **Where each hook takes effect:**
 
@@ -231,7 +231,7 @@ guard's `onFinish` stream summaries.
 ### 7.1 fallback: eager vs lazy (D1, locked)
 
 `fallback` accepts **both forms** — lazy thunks (`() => Source<T>`) and eager streams. With lazy
-thunks, source *N+1* starts only when source *N* fails (true cost-saving failover). With eager
+thunks, source _N+1_ starts only when source _N_ fails (true cost-saving failover). With eager
 streams it still works but loses the cost-saving property. The non-goal is reworded:
 
 > No automatic retry of the **same** source. Starting the **next, distinct** source is the entire
@@ -245,11 +245,11 @@ streams it still works but loses the cost-saving property. The non-goal is rewor
 You cannot "un-send" already-yielded items, so the real decision is **whether mux buffers before
 flushing**, expressed as `FailoverPolicy`:
 
-| Policy | Behavior | Trade-off |
-| ------ | -------- | --------- |
-| `"commit"` **(default)** | Failover automatic **only before the commit point**. Commit point = first forwarded item; if `isUsable` given, items buffer until the first usable one and *that* is the commit point. After commit, a later error **propagates** — mux does not splice. | Streams immediately; clean; consistent with `race`. |
-| `"buffered"` | Hold all output until the source completes/commits, then flush. On failover, discard the failed buffer and start the next clean. | Perfectly clean failover, but kills streaming (latency = full response). |
-| `"post-emit"` | Stream eagerly; on a post-commit failure switch to the next source and emit an **out-of-band** `failover` `SourceEvent` so the UI can reset. | Real streaming + resilience, consumer must handle a reset. Never in-band. |
+| Policy                   | Behavior                                                                                                                                                                                                                                                 | Trade-off                                                                 |
+| ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| `"commit"` **(default)** | Failover automatic **only before the commit point**. Commit point = first forwarded item; if `isUsable` given, items buffer until the first usable one and _that_ is the commit point. After commit, a later error **propagates** — mux does not splice. | Streams immediately; clean; consistent with `race`.                       |
+| `"buffered"`             | Hold all output until the source completes/commits, then flush. On failover, discard the failed buffer and start the next clean.                                                                                                                         | Perfectly clean failover, but kills streaming (latency = full response).  |
+| `"post-emit"`            | Stream eagerly; on a post-commit failure switch to the next source and emit an **out-of-band** `failover` `SourceEvent` so the UI can reset.                                                                                                             | Real streaming + resilience, consumer must handle a reset. Never in-band. |
 
 ### 7.3 race semantics
 
@@ -352,41 +352,41 @@ function toReadable<T>(it: AsyncIterable<T>): ReadableStream<T>;
 function toAsyncIterable<T>(rs: ReadableStream<T>): AsyncIterable<T>;
 
 type Sources<T> =
-  | Source<T>[]
-  | Record<string, Source<T>>
-  | Array<{ id: string; source: Source<T> }>;
+	| Source<T>[]
+	| Record<string, Source<T>>
+	| Array<{ id: string; source: Source<T> }>;
 
 interface CommonOptions<T, U = T> {
-  signal?: AbortSignal;
-  isError?: (item: T) => boolean;
-  isFinal?: (item: T) => boolean;
-  mapEach?: (item: T, source: string) => U;
-  onSourceEvent?: (e: SourceEvent) => void;     // out-of-band telemetry
-  onFinish?: (result: MuxResult) => void;        // final summary
-  timeoutMs?: number;                            // per-source TTF-usable
-  overallTimeoutMs?: number;                     // whole-operation deadline
-  highWaterMark?: number;                        // output queuing strategy (default 1)
-  sourceHighWaterMark?: number;                  // per-source queuing strategy
+	signal?: AbortSignal;
+	isError?: (item: T) => boolean;
+	isFinal?: (item: T) => boolean;
+	mapEach?: (item: T, source: string) => U;
+	onSourceEvent?: (e: SourceEvent) => void; // out-of-band telemetry
+	onFinish?: (result: MuxResult) => void; // final summary
+	timeoutMs?: number; // per-source TTF-usable
+	overallTimeoutMs?: number; // whole-operation deadline
+	highWaterMark?: number; // output queuing strategy (default 1)
+	sourceHighWaterMark?: number; // per-source queuing strategy
 }
 
 interface RaceOptions<T, U = T> extends CommonOptions<T, U> {
-  isUsable?: (item: T) => boolean;
+	isUsable?: (item: T) => boolean;
 }
 
 interface FallbackOptions<T, U = T> extends CommonOptions<T, U> {
-  policy?: FailoverPolicy;                       // default "commit"
-  isUsable?: (item: T) => boolean;               // gates commit point (§7.2)
+	policy?: FailoverPolicy; // default "commit"
+	isUsable?: (item: T) => boolean; // gates commit point (§7.2)
 }
 
 interface MergeOptions<T, U = T> extends CommonOptions<T, U> {
-  failFast?: boolean;                            // default false
-  order?: MergeOrder;                            // default "arrival"
-  concurrency?: number;                          // default = all sources
+	failFast?: boolean; // default false
+	order?: MergeOrder; // default "arrival"
+	concurrency?: number; // default = all sources
 }
 
 interface TeeOptions {
-  backpressure?: TeeBackpressure;                // default "block"
-  bufferLimit?: number;                          // for "bounded" / "drop"
+	backpressure?: TeeBackpressure; // default "block"
+	bufferLimit?: number; // for "bounded" / "drop"
 }
 ```
 
@@ -406,13 +406,13 @@ import { race } from "llm-stream-mux";
 const winner = race<Uint8Array>([resA.body!, resB.body!], { signal, timeoutMs: 5000 });
 
 return new Response(
-  new ReadableStream<Uint8Array>({
-    async start(controller) {
-      for await (const chunk of winner) controller.enqueue(chunk);
-      controller.close();
-    },
-  }),
-  { headers: { "Content-Type": "text/event-stream" } },
+	new ReadableStream<Uint8Array>({
+		async start(controller) {
+			for await (const chunk of winner) controller.enqueue(chunk);
+			controller.close();
+		},
+	}),
+	{ headers: { "Content-Type": "text/event-stream" } },
 );
 ```
 
@@ -421,14 +421,17 @@ return new Response(
 ```ts
 import { merge } from "llm-stream-mux";
 
-for await (const tagged of merge<MyEvent>({ gpt: modelA, claude: modelB }, {
-  isError: (e) => e.type === "error",
-  onSourceEvent: (s) => log(s),
-  onFinish: (r) => metrics(r),
-})) {
-  if (tagged.kind === "value") render(tagged.source, tagged.value);
-  else if (tagged.kind === "error") flag(tagged.source, tagged.error);
-  else markDone(tagged.source);
+for await (const tagged of merge<MyEvent>(
+	{ gpt: modelA, claude: modelB },
+	{
+		isError: (e) => e.type === "error",
+		onSourceEvent: (s) => log(s),
+		onFinish: (r) => metrics(r),
+	},
+)) {
+	if (tagged.kind === "value") render(tagged.source, tagged.value);
+	else if (tagged.kind === "error") flag(tagged.source, tagged.error);
+	else markDone(tagged.source);
 }
 ```
 
@@ -437,10 +440,11 @@ for await (const tagged of merge<MyEvent>({ gpt: modelA, claude: modelB }, {
 ```ts
 import { fallback } from "llm-stream-mux";
 
-const out = fallback<MyEvent>(
-  [() => primaryModel(), () => backupModel()],
-  { policy: "commit", isError: (e) => e.type === "error", timeoutMs: 8000 },
-);
+const out = fallback<MyEvent>([() => primaryModel(), () => backupModel()], {
+	policy: "commit",
+	isError: (e) => e.type === "error",
+	timeoutMs: 8000,
+});
 for await (const ev of out) handle(ev);
 ```
 
@@ -472,7 +476,7 @@ This dual placement is a key differentiator vs. a generic async-iterator utility
 - **D6 — `ALL_FAILED` aggregates `errors[]` (AggregateError-style).** §6.3.
 - **D7 — `merge.order` default `"arrival"`; `round-robin` opt-in for fairness/determinism.** §7.4.
 - **D8 — `round-robin` merge: no extra per-source buffering.** Same §7.7 HWM + one pending read
-  per active source as `arrival`. Round-robin changes *selection order*, not backpressure.
+  per active source as `arrival`. Round-robin changes _selection order_, not backpressure.
 - **D9 — `mapEach` is sync-only, permanently.** Async transforms stay in userland; keeps merge
   ordering, race/fallback commit timing, and error semantics predictable.
 - **D10 — Interop naming: `toReadable` + `toAsyncIterable` only.** Symmetric pair; no
@@ -531,6 +535,7 @@ examples/
 ## 16. P0 — Project scaffolding
 
 **Tasks**
+
 - `package.json`: name `llm-stream-mux`, `type: module`, empty `dependencies`, dev-deps:
   `typescript`, `tsup`, `vitest`, `eslint` + config, `prettier`. Scripts:
   `build` (tsup), `test` (vitest run), `typecheck` (tsc --noEmit), `lint`, `format`,
@@ -541,19 +546,20 @@ examples/
 
 ```jsonc
 {
-  "main": "./dist/index.cjs",
-  "module": "./dist/index.js",
-  "types": "./dist/index.d.ts",
-  "sideEffects": false,
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "require": "./dist/index.cjs"
-    }
-  }
+	"main": "./dist/index.cjs",
+	"module": "./dist/index.js",
+	"types": "./dist/index.d.ts",
+	"sideEffects": false,
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"import": "./dist/index.js",
+			"require": "./dist/index.cjs",
+		},
+	},
 }
 ```
+
 - `tsconfig.json` (strict, ES2022, `lib: ["ES2022","DOM"]` for Web Streams types), `tsup.config.ts`
   (esm+cjs+dts), `vitest.config.ts`, `eslint.config.js`, `.prettierrc`, `.gitignore`,
   `.editorconfig`, `LICENSE` (MIT), minimal `README.md` stub, `CHANGELOG.md` (Unreleased).
@@ -565,6 +571,7 @@ with empty deps; `types.ts` compiles and exports every §6/§9 type.
 ## 17. P1 — Core internals & interop
 
 **Tasks**
+
 - `internal/source.ts`: `normalizeSource(src, id)` → a uniform async reader with `next()`,
   `cancel(reason)`, and lazy-thunk invocation. Must handle all three `Source<T>` forms and adapt
   `AsyncIterable` ↔ `ReadableStream` internally. Cancel propagation per §7.5; swallow cancel errors.
@@ -683,14 +690,14 @@ changes output buffering behavior.
 **Tasks** — write `docs/edge-cases.md` + `test/edge.test.ts` covering the matrix below; treat each
 as a binding contract.
 
-| Case | race | fallback | merge | tee |
-| ---- | ---- | -------- | ----- | --- |
-| empty `sources` (`[]`) | throws `NO_USABLE_SOURCE` | throws `ALL_FAILED` (0 errors) | yields nothing, completes | n/a |
-| single source | pass-through | pass-through | tagged pass-through | works |
-| all sources empty | `NO_USABLE_SOURCE` | `ALL_FAILED` | completes (all `done`) | branches close |
-| source throws before first item | disqualified | failover | `error` tag, others continue | branch errors per policy |
-| consumer breaks early (`break` in `for await`) | losers + winner cancelled | active source cancelled | all sources cancelled | branch cancel rules |
-| `signal` already aborted | `ABORTED` immediately | `ABORTED` | `ABORTED` | branches error |
+| Case                                           | race                      | fallback                       | merge                        | tee                      |
+| ---------------------------------------------- | ------------------------- | ------------------------------ | ---------------------------- | ------------------------ |
+| empty `sources` (`[]`)                         | throws `NO_USABLE_SOURCE` | throws `ALL_FAILED` (0 errors) | yields nothing, completes    | n/a                      |
+| single source                                  | pass-through              | pass-through                   | tagged pass-through          | works                    |
+| all sources empty                              | `NO_USABLE_SOURCE`        | `ALL_FAILED`                   | completes (all `done`)       | branches close           |
+| source throws before first item                | disqualified              | failover                       | `error` tag, others continue | branch errors per policy |
+| consumer breaks early (`break` in `for await`) | losers + winner cancelled | active source cancelled        | all sources cancelled        | branch cancel rules      |
+| `signal` already aborted                       | `ABORTED` immediately     | `ABORTED`                      | `ABORTED`                    | branches error           |
 
 **Test IDs** `LSM-EDGE-01..` (one per cell). Also `LSM-REL-02`: early `break` leaks nothing
 (all readers cancelled).
@@ -700,6 +707,7 @@ as a binding contract.
 ## 24. P8 — docs, examples, release prep
 
 **Tasks**
+
 - `README.md`: positioning, install, quickstart (byte + event), strategy table, link to proposal.
 - `docs/integration-cookbook.md`: userland pairing with assemble (parse→mux, mux→parse) and guard
   (mux→guard) — **docs only, no npm coupling**.
@@ -744,16 +752,16 @@ If a phase reveals the spec is wrong or underspecified, update this document (Pa
 Each phase maps to a `0.x` release so progress is visible and bisectable. `1.0.0` is tagged ONLY
 when §25 Definition of done is fully satisfied.
 
-| Version | Reached after | Functional capability at this version |
-| ------- | ------------- | -------------------------------------- |
-| `0.1.0` | P0 + P1 | Scaffolding + core internals + interop helpers (`collect`, `toReadable`, `toAsyncIterable`). No strategies yet. |
-| `0.2.0` | P2 | `tee` works (N-way, all backpressure policies, independent cancel). |
-| `0.3.0` | P3 | `race` works (first-usable, loser cancel, commit, `NO_USABLE_SOURCE`). |
-| `0.4.0` | P4 | `fallback` works (lazy/eager, all `FailoverPolicy`, in-band failover, `ALL_FAILED`). |
-| `0.5.0` | P5 | `merge`/`ensemble` works (tagging, partial-failure, `order`, `concurrency`, backpressure). |
-| `0.6.0` | P6 | Cross-cutting complete (timeouts, `mapEach`, `SourceEvent`, `MuxResult`/`onFinish`, HWM). Full API per §9. |
-| `0.7.0` | P7 | Edge-case matrix + contract tests all green; no-leak guarantees verified. |
-| `1.0.0` | P8 + §25 | Docs, examples, cookbook, README; `release:prep` green; API frozen; Definition of done met. |
+| Version | Reached after | Functional capability at this version                                                                           |
+| ------- | ------------- | --------------------------------------------------------------------------------------------------------------- |
+| `0.1.0` | P0 + P1       | Scaffolding + core internals + interop helpers (`collect`, `toReadable`, `toAsyncIterable`). No strategies yet. |
+| `0.2.0` | P2            | `tee` works (N-way, all backpressure policies, independent cancel).                                             |
+| `0.3.0` | P3            | `race` works (first-usable, loser cancel, commit, `NO_USABLE_SOURCE`).                                          |
+| `0.4.0` | P4            | `fallback` works (lazy/eager, all `FailoverPolicy`, in-band failover, `ALL_FAILED`).                            |
+| `0.5.0` | P5            | `merge`/`ensemble` works (tagging, partial-failure, `order`, `concurrency`, backpressure).                      |
+| `0.6.0` | P6            | Cross-cutting complete (timeouts, `mapEach`, `SourceEvent`, `MuxResult`/`onFinish`, HWM). Full API per §9.      |
+| `0.7.0` | P7            | Edge-case matrix + contract tests all green; no-leak guarantees verified.                                       |
+| `1.0.0` | P8 + §25      | Docs, examples, cookbook, README; `release:prep` green; API frozen; Definition of done met.                     |
 
 ### 26.3 Definition of "functional 1.0.0"
 

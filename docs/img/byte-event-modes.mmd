@@ -1,0 +1,24 @@
+flowchart LR
+	subgraph BYTE["Byte mode · T = Uint8Array"]
+		B1["fetch A.body"]
+		B2["fetch B.body"]
+		B3["race or fallback"]
+		B4["winner bytes"]
+		B5["assembleStream · userland"]
+		B1 --> B3
+		B2 --> B3
+		B3 --> B4 --> B5
+	end
+
+	subgraph EVENT["Event mode · T = StreamEvent or any type"]
+		E1["assemble each source"]
+		E2["merge with tags"]
+		E3["for await tagged"]
+		E1 --> E2 --> E3
+	end
+
+	classDef mode fill:#042f2e,stroke:#2dd4bf,stroke-width:2px,color:#ccfbf1
+	classDef step fill:#1e1b4b,stroke:#818cf8,stroke-width:2px,color:#ede9fe
+
+	class B1,B2,B3,B4,B5,E1,E2,E3 step
+	class BYTE,EVENT mode

@@ -1,0 +1,38 @@
+flowchart TD
+	START(["What do you need?"])
+
+	START --> COUNT{How many live streams?}
+	COUNT -->|One stream, many consumers| TEE["tee(source, n)<br/>bounded backpressure"]
+	COUNT -->|Many streams, one output| GOAL{Goal?}
+
+	GOAL -->|Fastest response wins| RACE["race(sources)<br/>cancel losers"]
+	GOAL -->|Primary → backup on failure| FB["fallback(sources)<br/>lazy thunks recommended"]
+	GOAL -->|Run models in parallel| MRG["merge(sources)<br/>Tagged&lt;T&gt; per source"]
+
+	RACE --> HOOKS{Need semantic gates?}
+	FB --> HOOKS
+	MRG --> HOOKS
+	HOOKS -->|yes| OPT["isUsable · isError · isFinal · mapEach"]
+	HOOKS -->|no| DONE(["AsyncIterable or ReadableStream[]"])
+
+	OPT --> DONE
+	TEE --> DONE
+
+	BYTE{Raw bytes or parsed events?}
+	BYTE -->|Uint8Array before assemble| BM["Byte mode · T = Uint8Array"]
+	BYTE -->|After assemble / guard| EM["Event mode · T = your event type"]
+	BM --> COUNT
+	EM --> COUNT
+
+	ASM["Need provider parsing?"]
+	ASM --> AOUT["Use llm-stream-assemble first · see ecosystem diagram"]
+	PARSE["Need security filter?"]
+	PARSE --> POUT["Use llm-stream-guard · docs/integration-cookbook.md"]
+
+	classDef pick fill:#1e1b4b,stroke:#818cf8,stroke-width:2px,color:#ede9fe
+	classDef out fill:#134e4a,stroke:#2dd4bf,stroke-width:2px,color:#f0fdfa
+	classDef note fill:#451a03,stroke:#fb923c,stroke-width:1px,color:#ffedd5
+
+	class RACE,FB,MRG,TEE,OPT,BYTE,BM,EM pick
+	class DONE out
+	class ASM,AOUT,PARSE,POUT note

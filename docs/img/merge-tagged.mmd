@@ -1,0 +1,37 @@
+flowchart TB
+	subgraph SOURCES["Concurrent sources"]
+		S1["gpt"]
+		S2["claude"]
+		S3["backup"]
+	end
+
+	subgraph MUX["merge() read-loop"]
+		PENDING["One pending read per source"]
+		BP["await output.ready · backpressure"]
+		RR["order: arrival or round-robin"]
+		PENDING --> BP --> RR
+	end
+
+	subgraph OUT["Tagged output stream"]
+		V["kind: value · source + item"]
+		E["kind: error · MuxError"]
+		D["kind: done · source ended"]
+	end
+
+	S1 --> PENDING
+	S2 --> PENDING
+	S3 --> PENDING
+	RR --> V
+	RR --> E
+	RR --> D
+
+	OBS["onSourceEvent · out-of-band telemetry"]
+	MRG --> OBS
+
+	classDef src fill:#0f172a,stroke:#38bdf8,stroke-width:2px,color:#e0f2fe
+	classDef core fill:#042f2e,stroke:#2dd4bf,stroke-width:2px,color:#ccfbf1
+	classDef tag fill:#134e4a,stroke:#5eead4,stroke-width:2px,color:#f0fdfa
+
+	class S1,S2,S3 src
+	class PENDING,BP,RR,MUX core
+	class V,E,D,OBS tag

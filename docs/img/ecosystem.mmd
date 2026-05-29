@@ -1,0 +1,25 @@
+flowchart LR
+	subgraph STACK["llm-stream-* ecosystem · zero runtime deps each"]
+		direction TB
+		ASM["llm-stream-assemble<br/>1→1 · FORMAT<br/>parse one provider stream"]
+		GRD["llm-stream-guard<br/>1→1 · SAFETY<br/>redact · allow/deny tools"]
+		MUX["llm-stream-mux<br/>N↔1 · ORCHESTRATION<br/>race · fallback · merge · tee"]
+	end
+
+	BYTES(["Raw bytes / SSE"])
+	EVENTS(["Typed events · any T"])
+	OUT(["App · proxy · agent"])
+
+	BYTES --> ASM
+	ASM --> EVENTS
+	EVENTS --> GRD
+	EVENTS --> MUX
+	BYTES --> MUX
+	GRD --> MUX
+	MUX --> OUT
+
+	classDef lib fill:#1e1b4b,stroke:#818cf8,stroke-width:2px,color:#ede9fe
+	classDef io fill:#134e4a,stroke:#2dd4bf,stroke-width:2px,color:#f0fdfa
+
+	class ASM,GRD,MUX lib
+	class BYTES,EVENTS,OUT io
