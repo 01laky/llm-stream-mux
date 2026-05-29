@@ -11,6 +11,7 @@ const diagrams = [
 	"quick-decision.mmd",
 	"byte-event-modes.mmd",
 	"merge-tagged.mmd",
+	"public-api-types.mmd",
 ];
 
 const errors = [];

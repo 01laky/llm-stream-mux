@@ -56,7 +56,32 @@ Calling `return()` on an async iterator does not guarantee the underlying HTTP r
 
 ---
 
-## F) Contract matrix (binding at P7)
+## F) P0 type surface edge cases (frozen at scaffold)
+
+The public API is **generic over `T`** — errors cannot be synthesized as `T`, so merge uses `Tagged<T>` with explicit `kind` variants. These are pinned at P0 before runtime strategies exist:
+
+| Case                                           | Risk                             | P0 pin                                        |
+| ---------------------------------------------- | -------------------------------- | --------------------------------------------- |
+| `Tagged` used as plain union without narrowing | Access `value` on `error` branch | `LSM-TYP-01`–`03` discriminant tests          |
+| `ALL_FAILED` without `errors[]`                | Loses per-source diagnostics     | `LSM-TYP-04` aggregate shape                  |
+| `Sources` labeled vs positional confusion      | Wrong `source` tags in merge     | `LSM-TYP-06` three input forms                |
+| Lazy thunk invoked at call site                | Breaks failover cost model       | `LSM-TYP-07` deferred invocation              |
+| `fromAsyncIterable` alias creep                | Violates D10                     | `LSM-REL-02` export denial                    |
+| Premature `race()` stub in public API          | False semver promise             | `LSM-REL-02` strategy export denial           |
+| `MuxErrorCode` drift vs `MUX_ERROR_CODES`      | Telemetry/SIEM mismatch          | `LSM-REL-02`, `LSM-TYP-16`–`21`, `LSM-TYP-45` |
+| `dist/index.d.ts` missing exports / leaks API  | Broken consumers                 | `LSM-TYP-51`, `LSM-TYP-52`                    |
+| Matrix error codes before runtime exists       | Spec drift vs implementation     | `LSM-EDGE-P0-01`–`26`                         |
+| Hook composition / policy literals             | Wrong defaults at call site      | `LSM-TYP-30`–`35`                             |
+| Byte vs event generic `T`                      | Accidental event model coupling  | `LSM-TYP-23`, `LSM-TYP-24`                    |
+| Fn signature types (Race/Merge/Tee/interop)    | Wrong consumer typings at P1     | `LSM-TYP-55`–`58`                             |
+| Source union runtime (empty/cancel/lazy)       | Broken edge matrix at P7         | `LSM-SRC-01`–`08`                             |
+| `MUX_ERROR_CODES` mutability                   | Telemetry enum drift             | `LSM-TYP-63`                                  |
+
+Diagram: [public-api-types.svg](./img/public-api-types.svg).
+
+---
+
+## G) Contract matrix (binding at P7)
 
 | Case                            | race               | fallback                | merge                        | tee            |
 | ------------------------------- | ------------------ | ----------------------- | ---------------------------- | -------------- |
@@ -71,7 +96,7 @@ Each cell → `LSM-EDGE-NN` in `test/edge.test.ts` (P7).
 
 ---
 
-## G) Prove it locally (after P1+)
+## H) Prove it locally (after P1+)
 
 Once helpers land in `test/helpers/streams.ts`:
 
@@ -97,4 +122,4 @@ for await (const chunk of race([junkFirst, slowGood], {
 
 - [Proposal §7](./proposal.MD#7-error-cancellation--backpressure-semantics)
 - [Usage guides](./usage-guides.md)
-- [Testing strategy](./testing-strategy.md) (P7)
+- [Testing strategy](./testing-strategy.md)

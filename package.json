@@ -14,7 +14,23 @@
 		"LICENSE",
 		"README.md"
 	],
+	"main": "./dist/index.cjs",
+	"module": "./dist/index.js",
+	"types": "./dist/index.d.ts",
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"import": "./dist/index.js",
+			"require": "./dist/index.cjs"
+		}
+	},
 	"scripts": {
+		"build": "tsup",
+		"dev": "tsup --watch",
+		"typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.test.json",
+		"test": "vitest run",
+		"test:watch": "vitest",
+		"smoke:package": "node scripts/smoke-package.mjs",
 		"diagrams:build": "node scripts/build-diagrams.mjs",
 		"diagrams:check": "node scripts/check-diagrams.mjs",
 		"verify:deps": "node scripts/verify-zero-deps.mjs",
@@ -23,7 +39,7 @@
 		"lint:fix": "eslint . --fix",
 		"format": "prettier --check .",
 		"format:fix": "prettier --write .",
-		"verify": "pnpm verify:deps && pnpm verify:docs && pnpm diagrams:check && pnpm format && pnpm lint",
+		"verify": "pnpm verify:deps && pnpm lint && pnpm typecheck && pnpm build && pnpm test && pnpm smoke:package && pnpm verify:docs && pnpm diagrams:check && pnpm format",
 		"release:prep": "node scripts/release-prep.mjs"
 	},
 	"keywords": [
@@ -57,7 +73,13 @@
 	"packageManager": "pnpm@9.15.9",
 	"devDependencies": {
 		"@eslint/js": "^9.28.0",
+		"@types/node": "^22.15.29",
 		"eslint": "^9.28.0",
-		"prettier": "^3.5.3"
+		"globals": "^16.2.0",
+		"prettier": "^3.5.3",
+		"tsup": "^8.5.0",
+		"typescript": "^5.8.3",
+		"typescript-eslint": "^8.33.0",
+		"vitest": "^3.2.1"
 	}
 }

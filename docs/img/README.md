@@ -11,6 +11,7 @@ Mermaid — always commit updated **`.svg`** files alongside **`.mmd`** edits.
 | `quick-decision.mmd`      | Strategy picker + byte vs event mode                                |
 | `byte-event-modes.mmd`    | Where mux sits before or after parsing                              |
 | `merge-tagged.mmd`        | Concurrent merge → `Tagged<T>` + `onSourceEvent`                    |
+| `public-api-types.mmd`    | P0 public surface: §6 types + §9 signature types vs runtime exports |
 
 Regenerate after editing sources:
 

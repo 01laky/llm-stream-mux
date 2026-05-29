@@ -1,0 +1,34 @@
+flowchart TB
+	subgraph TYPES["Public types · proposal §6"]
+		SRC["Source&lt;T&gt; · Sources&lt;T&gt;"]
+		TAG["Tagged&lt;T&gt;"]
+		ERR["MuxError · MuxErrorCode"]
+		TEL["SourceEvent · MuxResult"]
+		POL["FailoverPolicy · TeeBackpressure · MergeOrder"]
+	end
+
+	subgraph API["Function signatures · §9 · P2–P5 runtime"]
+		R["RaceFn"]
+		F["FallbackFn"]
+		M["MergeFn"]
+		T["TeeFn"]
+		I["CollectFn · ToReadableFn · ToAsyncIterableFn"]
+	end
+
+	subgraph P0["P0 exports today"]
+		V["MUX_PKG_VERSION"]
+		C["MUX_ERROR_CODES"]
+		TX["export type * from types"]
+	end
+
+	TYPES --> P0
+	API -.->|types only| P0
+	R & F & M & T & I -.-> API
+
+	classDef types fill:#1e1b4b,stroke:#818cf8,stroke-width:2px,color:#ede9fe
+	classDef api fill:#042f2e,stroke:#2dd4bf,stroke-width:2px,color:#ccfbf1
+	classDef now fill:#134e4a,stroke:#5eead4,stroke-width:2px,color:#f0fdfa
+
+	class SRC,TAG,ERR,TEL,POL types
+	class R,F,M,T,I api
+	class V,C,TX now

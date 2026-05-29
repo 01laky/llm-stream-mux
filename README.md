@@ -3,7 +3,7 @@
 ![version](https://img.shields.io/badge/version-0.0.0-lightgrey)
 ![node](https://img.shields.io/badge/node-%3E%3D18-339933)
 ![runtime deps](https://img.shields.io/badge/runtime_deps-0-brightgreen)
-![status](https://img.shields.io/badge/status-pre--implementation-orange)
+![status](https://img.shields.io/badge/status-P0_types_scaffold-yellow)
 [![ci](https://github.com/01laky/llm-stream-mux/actions/workflows/ci.yml/badge.svg)](https://github.com/01laky/llm-stream-mux/actions/workflows/ci.yml)
 
 **Race, fallback, merge, and tee over any stream** — generic over `T`, zero runtime dependencies, Web Streams throughout.
@@ -12,7 +12,7 @@
 
 Orchestrate streams — **not another hand-rolled `Promise.race` on fetch**.
 
-**Status:** Pre-implementation (design locked). Spec: [`docs/proposal.MD`](./docs/proposal.MD). Sibling parser: [`llm-stream-assemble`](https://github.com/01laky/llm-stream-assemble).
+**Status:** `0.0.0` — P0 complete (types + build scaffold). Strategies land in P2–P5. Spec: [`docs/proposal.MD`](./docs/proposal.MD).
 
 ---
 
@@ -136,6 +136,7 @@ Strategy picker: [docs/usage-guides.md](./docs/usage-guides.md) · [quick-decisi
 ![End-to-end pipeline](https://raw.githubusercontent.com/01laky/llm-stream-mux/main/docs/img/pipeline.svg)
 
 - Diagram index: [docs/img/README.md](./docs/img/README.md)
+- Public API types (P0): [public-api-types.svg](./docs/img/public-api-types.svg)
 - Ecosystem stack: [ecosystem.svg](./docs/img/ecosystem.svg)
 - Byte vs event placement: [byte-event-modes.svg](./docs/img/byte-event-modes.svg)
 - Merge `Tagged<T>` flow: [merge-tagged.svg](./docs/img/merge-tagged.svg)
@@ -193,25 +194,22 @@ For parsing examples see [`llm-stream-assemble/examples`](https://github.com/01l
 
 ```bash
 ./scripts/setup-githooks.sh   # once per clone — strip AI co-author trailers
-pnpm verify:docs
-pnpm verify:deps
-pnpm diagrams:check
-```
-
-After P0 implementation:
-
-```bash
 pnpm install
 pnpm verify
 ```
 
-| Command               | Description                                  |
-| --------------------- | -------------------------------------------- |
-| `pnpm verify`         | deps + docs + diagram freshness              |
-| `pnpm verify:deps`    | fail if runtime dependencies added           |
-| `pnpm diagrams:build` | render `docs/img/*.mmd` → `.svg`             |
-| `pnpm diagrams:check` | CI gate — SVGs present and newer than `.mmd` |
-| `pnpm release:prep`   | pre-tag checks (from 1.0.0)                  |
+CI runs `pnpm verify` on Node **18, 20, and 22**.
+
+| Command               | Description                                                                       |
+| --------------------- | --------------------------------------------------------------------------------- |
+| `pnpm verify`         | deps + lint + typecheck + build + test + smoke:package + docs + diagrams + format |
+| `pnpm build`          | tsup → ESM + CJS + declarations in `dist/`                                        |
+| `pnpm test`           | Vitest — `LSM-REL-01`, `LSM-REL-02`, `LSM-TYP-*`                                  |
+| `pnpm smoke:package`  | ESM/CJS import from `npm pack` tarball                                            |
+| `pnpm verify:deps`    | fail if runtime dependencies added                                                |
+| `pnpm diagrams:build` | render `docs/img/*.mmd` → `.svg`                                                  |
+| `pnpm diagrams:check` | SVGs present and newer than `.mmd`                                                |
+| `pnpm release:prep`   | pre-tag checks when `dist/` exists                                                |
 
 ---
 

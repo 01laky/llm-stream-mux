@@ -13,6 +13,7 @@ const diagrams = [
 	"quick-decision.mmd",
 	"byte-event-modes.mmd",
 	"merge-tagged.mmd",
+	"public-api-types.mmd",
 ];
 
 for (const name of diagrams) {
