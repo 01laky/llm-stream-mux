@@ -32,6 +32,7 @@ import {
 	type ToAsyncIterableFn,
 	type ToReadableFn,
 } from "../src/index.js";
+import { readableFrom } from "./helpers/type-fixtures.js";
 
 const PUBLIC_RUNTIME_EXPORTS = ["MUX_ERROR_CODES", "MUX_PKG_VERSION"] as const;
 
@@ -180,9 +181,9 @@ describe("LSM-TYP edge cases for frozen public types", () => {
 	});
 
 	it("LSM-TYP-06 Sources accepts array, record, and labeled array", () => {
-		const array: Sources<number> = [ReadableStream.from([1])];
-		const record: Sources<number> = { a: ReadableStream.from([2]) };
-		const labeled: Sources<number> = [{ id: "x", source: ReadableStream.from([3]) }];
+		const array: Sources<number> = [readableFrom([1])];
+		const record: Sources<number> = { a: readableFrom([2]) };
+		const labeled: Sources<number> = [{ id: "x", source: readableFrom([3]) }];
 		expect(array).toHaveLength(1);
 		expect(Object.keys(record)).toEqual(["a"]);
 		expect(labeled[0]?.id).toBe("x");
@@ -192,7 +193,7 @@ describe("LSM-TYP edge cases for frozen public types", () => {
 		let invoked = false;
 		const lazy: Source<number> = () => {
 			invoked = true;
-			return ReadableStream.from([1]);
+			return readableFrom([1]);
 		};
 		expect(invoked).toBe(false);
 		const _stream = typeof lazy === "function" ? lazy() : lazy;

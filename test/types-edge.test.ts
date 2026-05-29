@@ -347,7 +347,13 @@ describe("LSM-TYP extended type edge cases", () => {
 			for await (const item of it) out.push(item);
 			return out;
 		};
-		const toReadable: ToReadableFn = (it) => ReadableStream.from(it);
+		const toReadable: ToReadableFn = (it) =>
+			new ReadableStream({
+				async start(controller) {
+					for await (const item of it) controller.enqueue(item);
+					controller.close();
+				},
+			});
 		const toAsyncIterable: ToAsyncIterableFn = async function* (rs) {
 			yield* rs;
 		};

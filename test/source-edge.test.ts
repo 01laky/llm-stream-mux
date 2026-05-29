@@ -54,7 +54,7 @@ describe("LSM-SRC source fixture edge cases", () => {
 		await expect(iter.next()).rejects.toThrow("source blew up");
 	});
 
-	it("LSM-SRC-07 ReadableStream.from single-chunk pass-through", async () => {
+	it("LSM-SRC-07 readableFrom single-chunk pass-through", async () => {
 		const chunk = new Uint8Array([0xca, 0xfe]);
 		expect(await collect(readableFrom([chunk]))).toEqual([chunk]);
 	});

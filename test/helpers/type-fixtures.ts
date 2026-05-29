@@ -37,7 +37,12 @@ export async function* asyncItems<T>(items: T[]): AsyncIterable<T> {
 }
 
 export function readableFrom<T>(items: T[]): ReadableStream<T> {
-	return ReadableStream.from(items);
+	return new ReadableStream<T>({
+		start(controller) {
+			for (const item of items) controller.enqueue(item);
+			controller.close();
+		},
+	});
 }
 
 export function lazySource<T>(factory: () => Source<T>): Source<T> {
