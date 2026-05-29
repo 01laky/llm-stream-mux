@@ -14,6 +14,10 @@ const forbidden = [
 		pattern: /ReadableStream\[Symbol\.asyncIterator\]/,
 		reason: "ReadableStream asyncIterator trap",
 	},
+	{
+		pattern: /\.tee\s*\(/,
+		reason: "native ReadableStream.tee (use mux fan-out)",
+	},
 ];
 
 function walk(dir, out = []) {

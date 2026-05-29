@@ -13,6 +13,7 @@ Mermaid — always commit updated **`.svg`** files alongside **`.mmd`** edits.
 | `merge-tagged.mmd`        | Concurrent merge → `Tagged<T>` + `onSourceEvent`                      |
 | `public-api-types.mmd`    | P0 public surface: §6 types + §9 signature types vs runtime exports   |
 | `core-internals.mmd`      | P1 modules: normalize, abort, errors, telemetry, interop → strategies |
+| `tee-fanout.mmd`          | P2 tee: block / bounded / drop + cancel vs error vs natural close     |
 
 Regenerate after editing sources:
 

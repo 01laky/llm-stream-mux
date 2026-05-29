@@ -1,0 +1,40 @@
+flowchart TB
+  src["Source (RS / AsyncIterable / lazy)"]
+  norm["normalizeSource id=0"]
+  ctrl["FanoutController"]
+
+  subgraph branches["Branch streams 0..n-1"]
+    b0["ReadableStream branch 0"]
+    b1["ReadableStream branch 1"]
+    bn["ReadableStream branch n-1"]
+  end
+
+  src --> norm --> ctrl
+  ctrl --> b0
+  ctrl --> b1
+  ctrl --> bn
+
+  subgraph block["block (default)"]
+    blk["broadcast item; all active branches ack before next read"]
+  end
+
+  subgraph bounded["bounded"]
+    bnd["per-branch queue cap; overflow → branch.error SOURCE_ERROR"]
+  end
+
+  subgraph drop["drop"]
+    drp["per-branch queue cap; overflow → shift oldest"]
+  end
+
+  ctrl --> block
+  ctrl --> bounded
+  ctrl --> drop
+
+  subgraph lifecycle["Lifecycle (orthogonal)"]
+    c1["one branch cancel → others continue"]
+    c2["all branches cancel → source.cancel tee-all-cancelled"]
+    c3["branch error → branch inactive; source continues"]
+    c4["natural done + drain → branches close; no source.cancel"]
+  end
+
+  ctrl --> lifecycle

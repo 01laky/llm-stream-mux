@@ -83,7 +83,7 @@ Options: `failFast`, `order: "arrival" | "round-robin"`, `concurrency`. Diagram:
 
 ## tee
 
-Split **one** stream into N independent consumers with bounded backpressure (unlike native `ReadableStream.tee()`).
+Split **one** stream into N independent consumers with bounded backpressure (unlike native `ReadableStream.tee()`). **Implemented in `0.2.0`.**
 
 ```ts
 import { tee } from "llm-stream-mux";

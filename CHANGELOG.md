@@ -3,6 +3,34 @@
 All notable changes to this project are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/); versioning follows [Semantic Versioning](https://semver.org/).
 
+## [0.2.0]
+
+### Added
+
+- **`tee(source, n, opts?)`** — first runtime strategy; N-way fan-out with `block` / `bounded` / `drop` (§8, D5)
+- **`src/internal/tee-fanout.ts`** — shared pump over `normalizeSource`
+- **`test/tee.test.ts`** — `LSM-TEE-01`–`64` (extended edge cases `43`–`64`)
+- **`test/helpers/streams.ts`** — `countingSource()` pull-counter helper
+- **`LSM-REL-04a/b`** — dist + smoke contract for `tee`
+- **Diagram** — `docs/img/tee-fanout.mmd` + SVG
+
+### Changed
+
+- **`src/index.ts`** — exports `tee`; `MUX_PKG_VERSION` → `0.2.0`
+- **`scripts/smoke-package.mjs`** — smoke `tee` empty 2-way
+- **`scripts/check-portability.mjs`** — forbid native `ReadableStream.tee` in `src/`
+- **Docs** — testing strategy, edge-case matrix, README status
+
+### Fixed
+
+- **`tee-fanout`** — errored branch repeats `branchError` on subsequent reads (no hang after first reject)
+
+### Notes
+
+- `race` / `fallback` / `merge` still types-only until P3–P5
+- `TeeOptions` hooks (`signal`, telemetry) deferred to P6
+- Next milestone **`0.3.0`** after P3 (`race`)
+
 ## [0.1.0]
 
 ### Added

@@ -12,7 +12,7 @@ If one branch reads slowly, native `tee()` buffers **without limit** for the slo
 
 **What mux does:** `tee()` with `block`, `bounded`, or `drop` policies (D5). `bounded` errors the lagging branch; `drop` drops oldest queued items.
 
-**Tests (planned):** `LSM-TEE-03`, `LSM-TEE-04`.
+**Tests:** `LSM-TEE-03`, `LSM-TEE-04` (block), `LSM-TEE-05`–`07` / `LSM-TEE-36` / `LSM-TEE-48`–`51` / `LSM-TEE-62` (bounded), `LSM-TEE-08`–`09` / `LSM-TEE-42` / `LSM-TEE-49` / `LSM-TEE-57` (drop), `LSM-TEE-38` / `LSM-TEE-61` (natural close ≠ cancel), `LSM-TEE-43`–`46` (arg validation), `LSM-TEE-52`–`55` / `LSM-TEE-60` / `LSM-TEE-63`–`64` (cancel semantics).
 
 ---
 

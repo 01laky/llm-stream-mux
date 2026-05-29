@@ -113,3 +113,64 @@ describe("LSM-REL-03 dist interop contract", () => {
 		}
 	});
 });
+
+describe("LSM-REL-04 tee dist contract", () => {
+	it("LSM-REL-04a tee runtime smoke from tarball", () => {
+		const temp = mkdtempSync(join(tmpdir(), "lsm-tee-smoke-"));
+		try {
+			execFileSync("npm", ["pack", "--pack-destination", temp], { cwd: root, stdio: "pipe" });
+			const tarball = readdirSync(temp).find((f) => f.endsWith(".tgz"));
+			expect(tarball).toBeTruthy();
+
+			writeFileSync(
+				join(temp, "package.json"),
+				JSON.stringify({ type: "module", dependencies: {} }, null, 2),
+			);
+			execFileSync("npm", ["install", "--ignore-scripts", join(temp, tarball!)], {
+				cwd: temp,
+				stdio: "pipe",
+			});
+
+			writeFileSync(
+				join(temp, "esm.mjs"),
+				`import { tee, collect, toAsyncIterable } from "llm-stream-mux";
+const branches = tee((async function* () {})(), 2);
+if (branches.length !== 2) throw new Error("branch count");
+await branches[1].cancel();
+const empty = await collect(toAsyncIterable(branches[0]));
+if (empty.length !== 0) throw new Error("tee drain");`,
+			);
+			writeFileSync(
+				join(temp, "cjs.mjs"),
+				`import { createRequire } from "node:module";
+const require = createRequire(import.meta.url);
+const { tee, collect, toAsyncIterable } = require("llm-stream-mux");
+const branches = tee((async function* () {})(), 2);
+if (branches.length !== 2) throw new Error("branch count");
+await branches[1].cancel();
+const empty = await collect(toAsyncIterable(branches[0]));
+if (empty.length !== 0) throw new Error("tee drain");`,
+			);
+			execFileSync("node", ["esm.mjs"], { cwd: temp, stdio: "pipe" });
+			execFileSync("node", ["cjs.mjs"], { cwd: temp, stdio: "pipe" });
+		} finally {
+			rmSync(temp, { recursive: true, force: true });
+		}
+	});
+
+	it("LSM-REL-04b tee in d.ts strategies still absent", () => {
+		const dts = readFileSync(join(root, "dist/index.d.ts"), "utf8");
+		expect(dts).toMatch(/declare function tee\b/);
+		expect(dts).not.toMatch(/declare function race\b/);
+		expect(dts).not.toMatch(/declare function fallback\b/);
+		expect(dts).not.toMatch(/declare function merge\b/);
+		expect(dts).not.toContain("normalizeSource");
+		expect(dts).not.toContain("createTelemetry");
+		expect(dts).not.toMatch(/declare function muxError\b/);
+		for (const file of ["dist/index.js", "dist/index.cjs"]) {
+			const body = readFileSync(join(root, file), "utf8");
+			expect(body).toContain("tee");
+			expect(body).not.toContain("node_modules");
+		}
+	});
+});

@@ -27,11 +27,16 @@ try {
 	writeFileSync(
 		join(temp, "esm.mjs"),
 		`
-import { MUX_PKG_VERSION, MUX_ERROR_CODES, collect } from "llm-stream-mux";
+import { MUX_PKG_VERSION, MUX_ERROR_CODES, collect, tee, toAsyncIterable } from "llm-stream-mux";
 if (MUX_PKG_VERSION !== ${JSON.stringify(version)}) throw new Error("ESM version mismatch");
 if (!Array.isArray(MUX_ERROR_CODES) || MUX_ERROR_CODES.length !== 6) throw new Error("ESM codes");
 const empty = await collect((async function* () {})());
 if (empty.length !== 0) throw new Error("ESM collect");
+const teeBranches = tee((async function* () {})(), 2);
+if (teeBranches.length !== 2) throw new Error("ESM tee");
+await teeBranches[1].cancel();
+const teeEmpty = await collect(toAsyncIterable(teeBranches[0]));
+if (teeEmpty.length !== 0) throw new Error("ESM tee drain");
 `,
 	);
 
@@ -40,11 +45,16 @@ if (empty.length !== 0) throw new Error("ESM collect");
 		`
 import { createRequire } from "node:module";
 const require = createRequire(import.meta.url);
-const { MUX_PKG_VERSION, MUX_ERROR_CODES, collect } = require("llm-stream-mux");
+const { MUX_PKG_VERSION, MUX_ERROR_CODES, collect, tee, toAsyncIterable } = require("llm-stream-mux");
 if (MUX_PKG_VERSION !== ${JSON.stringify(version)}) throw new Error("CJS version mismatch");
 if (!Array.isArray(MUX_ERROR_CODES) || MUX_ERROR_CODES.length !== 6) throw new Error("CJS codes");
 const empty = await collect((async function* () {})());
 if (empty.length !== 0) throw new Error("CJS collect");
+const teeBranches = tee((async function* () {})(), 2);
+if (teeBranches.length !== 2) throw new Error("CJS tee");
+await teeBranches[1].cancel();
+const teeEmpty = await collect(toAsyncIterable(teeBranches[0]));
+if (teeEmpty.length !== 0) throw new Error("CJS tee drain");
 `,
 	);
 

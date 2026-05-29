@@ -13,6 +13,7 @@ const diagrams = [
 	"merge-tagged.mmd",
 	"public-api-types.mmd",
 	"core-internals.mmd",
+	"tee-fanout.mmd",
 ];
 
 const errors = [];

@@ -293,6 +293,7 @@ describe("LSM-TYP extended type edge cases", () => {
 		expect(dts).toMatch(/declare function collect\b/);
 		expect(dts).toMatch(/declare function toReadable\b/);
 		expect(dts).toMatch(/declare function toAsyncIterable\b/);
+		expect(dts).toMatch(/declare function tee\b/);
 		expect(dts).toMatch(/export \{[^}]*type Source,/);
 	});
 

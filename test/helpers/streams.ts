@@ -1,3 +1,5 @@
+import type { Source } from "../../src/types.js";
+
 export type FromArrayOptions = {
 	delayMs?: number;
 	throwAt?: number;
@@ -86,5 +88,76 @@ export function controllableReadable<T>() {
 			controllerRef?.error(err);
 		},
 		cancelReason,
+	};
+}
+
+function wrapCountable<T>(
+	resolved: ReadableStream<T> | AsyncIterable<T>,
+	onPull: () => void,
+): AsyncIterable<T> {
+	return {
+		[Symbol.asyncIterator]() {
+			const stream = resolved as ReadableStream<T>;
+			if (typeof stream.getReader === "function") {
+				const reader = stream.getReader();
+				return {
+					async next() {
+						const result = await reader.read();
+						if (!result.done) onPull();
+						return result;
+					},
+					async return(reason?: unknown) {
+						try {
+							await reader.cancel(reason);
+						} catch {
+							/* swallow */
+						}
+						try {
+							reader.releaseLock();
+						} catch {
+							/* swallow */
+						}
+						return { done: true as const, value: undefined };
+					},
+				};
+			}
+
+			const iterator = (resolved as AsyncIterable<T>)[Symbol.asyncIterator]();
+			return {
+				async next() {
+					const result = await iterator.next();
+					if (!result.done) onPull();
+					return result;
+				},
+				return: iterator.return?.bind(iterator),
+			};
+		},
+	};
+}
+
+/** Increments pullCount on each successful item read from the wrapped source. */
+export function countingSource<T>(inner: Source<T> | (() => Source<T>)) {
+	let pullCount = 0;
+	const bump = () => {
+		pullCount += 1;
+	};
+
+	const wrapOne = (src: Source<T>): Source<T> => {
+		if (typeof src === "function") {
+			return () => wrapCountable(src(), bump);
+		}
+		return wrapCountable(src, bump);
+	};
+
+	const source: Source<T> = typeof inner === "function" ? () => wrapOne(inner) : wrapOne(inner);
+
+	return {
+		source,
+		get pullCount() {
+			return pullCount;
+		},
+		reset() {
+			pullCount = 0;
+		},
 	};
 }
