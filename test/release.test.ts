@@ -8,6 +8,9 @@ import { MUX_PKG_VERSION } from "../src/index.js";
 
 const root = resolve(fileURLToPath(new URL("..", import.meta.url)));
 
+/** npm pack + install is slow on CI runners; default vitest 5s is too tight. */
+const TARBALL_SMOKE_MS = 20_000;
+
 function readPkg() {
 	return JSON.parse(readFileSync(join(root, "package.json"), "utf8")) as {
 		version: string;
@@ -57,39 +60,8 @@ describe("LSM-REL-01 release scaffold", () => {
 		expect(body).not.toMatch(/from\s+["'](?!\.|\/)@/);
 	});
 
-	it("LSM-REL-01 smoke:package passes from npm pack tarball", () => {
-		const temp = mkdtempSync(join(tmpdir(), "lsm-smoke-"));
-		try {
-			execFileSync("npm", ["pack", "--pack-destination", temp], { cwd: root, stdio: "pipe" });
-			const tarball = readdirSync(temp).find((f) => f.endsWith(".tgz"));
-			expect(tarball).toBeTruthy();
-
-			writeFileSync(
-				join(temp, "package.json"),
-				JSON.stringify({ type: "module", dependencies: {} }, null, 2),
-			);
-			execFileSync("npm", ["install", "--ignore-scripts", join(temp, tarball!)], {
-				cwd: temp,
-				stdio: "pipe",
-			});
-
-			writeFileSync(
-				join(temp, "esm.mjs"),
-				`import { MUX_PKG_VERSION, MUX_ERROR_CODES } from "llm-stream-mux";
-if (MUX_PKG_VERSION !== "${readPkg().version}") throw new Error("version");
-if (MUX_ERROR_CODES.length !== 6) throw new Error("codes");`,
-			);
-			writeFileSync(
-				join(temp, "cjs.cjs"),
-				`const { MUX_PKG_VERSION, MUX_ERROR_CODES } = require("llm-stream-mux");
-if (MUX_PKG_VERSION !== "${readPkg().version}") throw new Error("version");
-if (MUX_ERROR_CODES.length !== 6) throw new Error("codes");`,
-			);
-			execFileSync("node", ["esm.mjs"], { cwd: temp, stdio: "pipe" });
-			execFileSync("node", ["cjs.cjs"], { cwd: temp, stdio: "pipe" });
-		} finally {
-			rmSync(temp, { recursive: true, force: true });
-		}
+	it("LSM-REL-01 smoke:package passes from npm pack tarball", { timeout: TARBALL_SMOKE_MS }, () => {
+		execFileSync("node", ["scripts/smoke-package.mjs"], { cwd: root, stdio: "pipe" });
 	});
 });
 
@@ -115,7 +87,7 @@ describe("LSM-REL-03 dist interop contract", () => {
 });
 
 describe("LSM-REL-04 tee dist contract", () => {
-	it("LSM-REL-04a tee runtime smoke from tarball", () => {
+	it("LSM-REL-04a tee runtime smoke from tarball", { timeout: TARBALL_SMOKE_MS }, () => {
 		const temp = mkdtempSync(join(tmpdir(), "lsm-tee-smoke-"));
 		try {
 			execFileSync("npm", ["pack", "--pack-destination", temp], { cwd: root, stdio: "pipe" });
@@ -176,7 +148,7 @@ if (empty.length !== 0) throw new Error("tee drain");`,
 });
 
 describe("LSM-REL-05 race dist contract", () => {
-	it("LSM-REL-05a race runtime smoke from tarball", () => {
+	it("LSM-REL-05a race runtime smoke from tarball", { timeout: TARBALL_SMOKE_MS }, () => {
 		const temp = mkdtempSync(join(tmpdir(), "lsm-race-smoke-"));
 		try {
 			execFileSync("npm", ["pack", "--pack-destination", temp], { cwd: root, stdio: "pipe" });
@@ -238,7 +210,7 @@ const { race, collect } = require("llm-stream-mux");
 });
 
 describe("LSM-REL-06 fallback dist contract", () => {
-	it("LSM-REL-06a fallback runtime smoke from tarball", () => {
+	it("LSM-REL-06a fallback runtime smoke from tarball", { timeout: TARBALL_SMOKE_MS }, () => {
 		const temp = mkdtempSync(join(tmpdir(), "lsm-fallback-smoke-"));
 		try {
 			execFileSync("npm", ["pack", "--pack-destination", temp], { cwd: root, stdio: "pipe" });
