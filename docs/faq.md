@@ -1,6 +1,6 @@
 # FAQ
 
-**Status:** Pre-implementation
+**Status:** P8 (`0.8.0`) — docs, examples, and release prep complete; **`1.0.0`** = npm publish + API freeze.
 
 ---
 
@@ -42,7 +42,7 @@ No (D9). Async transforms belong in userland (`TransformStream`, manual loops). 
 
 ## When is 1.0.0?
 
-When proposal §25 Definition of done is met — all `LSM-*` tests green, docs, examples, `release:prep` passing. Version ladder: proposal §26.2.
+**`0.8.0`** (P8) ships docs, examples, cookbook, and **`release:prep`**. **`1.0.0`** is tagged when §25 Definition of done is audited, **`pnpm verify`** is green, and the maintainer **explicitly declares §9 / §6.3 API frozen** for npm publish. See proposal **D13** and §26.2.
 
 ---
 
@@ -51,3 +51,4 @@ When proposal §25 Definition of done is met — all `LSM-*` tests green, docs, 
 - [Proposal](./proposal.MD)
 - [Usage guides](./usage-guides.md)
 - [Edge cases](./edge-cases.md)
+- [Examples](../examples/README.md)

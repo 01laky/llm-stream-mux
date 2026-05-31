@@ -1,6 +1,6 @@
 {
 	"name": "llm-stream-mux",
-	"version": "0.7.0",
+	"version": "0.8.0",
 	"description": "Zero-dependency TypeScript stream orchestration for LLM pipelines — race, fallback, merge, and tee over any AsyncIterable or ReadableStream, generic over T.",
 	"license": "MIT",
 	"author": "Ladislav Kostolny <01laky@gmail.com>",
@@ -28,6 +28,7 @@
 		"build": "tsup",
 		"dev": "tsup --watch",
 		"typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.test.json",
+		"typecheck:examples": "tsc --noEmit -p tsconfig.examples.json",
 		"test": "vitest run",
 		"test:watch": "vitest",
 		"smoke:package": "node scripts/smoke-package.mjs",
@@ -40,7 +41,7 @@
 		"lint:fix": "eslint . --fix",
 		"format": "prettier --check .",
 		"format:fix": "prettier --write .",
-		"verify": "pnpm verify:deps && pnpm verify:portability && pnpm lint && pnpm typecheck && pnpm build && pnpm test && pnpm smoke:package && pnpm verify:docs && pnpm diagrams:check && pnpm format",
+		"verify": "pnpm verify:deps && pnpm verify:portability && pnpm lint && pnpm typecheck && pnpm build && pnpm typecheck:examples && pnpm test && pnpm smoke:package && pnpm verify:docs && pnpm diagrams:check && pnpm format",
 		"release:prep": "node scripts/release-prep.mjs"
 	},
 	"keywords": [

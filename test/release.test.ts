@@ -368,11 +368,11 @@ const { merge, ensemble, collect } = require("llm-stream-mux");
 });
 
 describe("LSM-REL-08 cross-cutting dist contract", () => {
-	it("LSM-REL-08a d.ts CommonOptions fields and MUX_PKG_VERSION 0.7.0", () => {
+	it("LSM-REL-08a d.ts CommonOptions fields and MUX_PKG_VERSION 0.8.0", () => {
 		const dts = readFileSync(join(root, "dist/index.d.ts"), "utf8");
 		expectCommonOptionsInDts(dts);
-		expect(MUX_PKG_VERSION).toBe("0.7.0");
-		expect(readPkg().version).toBe("0.7.0");
+		expect(MUX_PKG_VERSION).toBe("0.8.0");
+		expect(readPkg().version).toBe("0.8.0");
 	});
 
 	it(
@@ -419,9 +419,9 @@ await mergeIter.return();`,
 });
 
 describe("LSM-REL-09 edge matrix dist contract", () => {
-	it("LSM-REL-09a MUX_PKG_VERSION 0.7.0 and edge.test.ts exists on disk", () => {
-		expect(MUX_PKG_VERSION).toBe("0.7.0");
-		expect(readPkg().version).toBe("0.7.0");
+	it("LSM-REL-09a MUX_PKG_VERSION 0.8.0 and edge.test.ts exists on disk", () => {
+		expect(MUX_PKG_VERSION).toBe("0.8.0");
+		expect(readPkg().version).toBe("0.8.0");
 		expect(existsSync(join(root, "test/edge.test.ts"))).toBe(true);
 		const edgeSrc = readFileSync(join(root, "test/edge.test.ts"), "utf8");
 		expect(edgeSrc).toContain("LSM-EDGE-01");
@@ -464,4 +464,150 @@ if (mergeEmpty.length !== 0) throw new Error("merge([]) smoke");`,
 			}
 		},
 	);
+});
+
+const EXAMPLE_FILES = [
+	"examples/node-fetch/_fake.ts",
+	"examples/node-fetch/race.ts",
+	"examples/node-fetch/fallback.ts",
+	"examples/node-fetch/merge.ts",
+	"examples/node-fetch/tee.ts",
+] as const;
+
+function extractReadmeQuickstartBlocks(readmePath: string): string[] {
+	const readme = readFileSync(readmePath, "utf8");
+	const start = readme.indexOf("## Quickstart");
+	if (start < 0) return [];
+	const rest = readme.slice(start);
+	const end = rest.search(/\n## [^#]/);
+	const section = end >= 0 ? rest.slice(0, end) : rest;
+	const blocks: string[] = [];
+	const re = /```ts\n([\s\S]*?)```/g;
+	let m: RegExpExecArray | null;
+	while ((m = re.exec(section)) !== null) {
+		blocks.push(m[1]!);
+	}
+	return blocks;
+}
+
+describe("LSM-REL-10 P8 examples and pack contract", () => {
+	it("LSM-REL-10a examples typecheck against dist", () => {
+		expect(existsSync(join(root, "dist/index.d.ts"))).toBe(true);
+		for (const rel of EXAMPLE_FILES) {
+			expect(existsSync(join(root, rel))).toBe(true);
+		}
+		execFileSync("pnpm", ["exec", "tsc", "--noEmit", "-p", "tsconfig.examples.json"], {
+			cwd: root,
+			stdio: "pipe",
+		});
+	});
+
+	it("LSM-REL-10b npm pack excludes test examples docs prompts", () => {
+		const temp = mkdtempSync(join(tmpdir(), "lsm-pack-manifest-"));
+		try {
+			execFileSync("npm", ["pack", "--pack-destination", temp], { cwd: root, stdio: "pipe" });
+			const tarball = readdirSync(temp).find((f) => f.endsWith(".tgz"));
+			expect(tarball).toBeTruthy();
+			const listing = execFileSync("tar", ["-tzf", join(temp, tarball!)], {
+				encoding: "utf8",
+			});
+			const paths = listing
+				.split("\n")
+				.map((line) => line.trim())
+				.filter(Boolean);
+			expect(paths.some((p) => p.includes("dist/index.d.ts"))).toBe(true);
+			for (const p of paths) {
+				expect(p).not.toMatch(/\/(test|examples|docs|prompts)(\/|$)/);
+			}
+		} finally {
+			rmSync(temp, { recursive: true, force: true });
+		}
+	});
+
+	it("LSM-REL-10c release prep script passes", () => {
+		expect(MUX_PKG_VERSION).toBe("0.8.0");
+		expect(readPkg().version).toBe("0.8.0");
+		execFileSync("node", ["scripts/release-prep.mjs"], { cwd: root, stdio: "pipe" });
+	});
+
+	it("LSM-REL-10d README quickstart ts blocks typecheck", () => {
+		const blocks = extractReadmeQuickstartBlocks(join(root, "README.md"));
+		expect(blocks.length).toBeGreaterThanOrEqual(2);
+		expect(blocks.some((b) => b.includes("race<Uint8Array>"))).toBe(true);
+		expect(blocks.some((b) => b.includes("merge<MyEvent>"))).toBe(true);
+
+		const temp = mkdtempSync(join(tmpdir(), "lsm-readme-quickstart-"));
+		try {
+			const preamble = [
+				"type MyEvent = { type: string; text?: string };",
+				"declare const resA: { body: ReadableStream<Uint8Array> };",
+				"declare const resB: { body: ReadableStream<Uint8Array> };",
+				"declare const streamA: AsyncIterable<MyEvent>;",
+				"declare const streamB: AsyncIterable<MyEvent>;",
+				"declare const signal: AbortSignal;",
+				"declare function log(x: unknown): void;",
+				"declare function render(source: string, value: MyEvent): void;",
+			].join("\n");
+			const combined = `${preamble}\n\n${blocks.join("\n\n")}`;
+			writeFileSync(join(temp, "quickstart.ts"), combined);
+			writeFileSync(
+				join(temp, "tsconfig.json"),
+				JSON.stringify(
+					{
+						extends: join(root, "tsconfig.examples.json"),
+						compilerOptions: {
+							rootDir: ".",
+							baseUrl: root,
+							paths: {
+								"llm-stream-mux": [join(root, "dist/index.d.ts")],
+							},
+						},
+						include: ["quickstart.ts"],
+					},
+					null,
+					2,
+				),
+			);
+			execFileSync("pnpm", ["exec", "tsc", "--noEmit", "-p", join(temp, "tsconfig.json")], {
+				cwd: root,
+				stdio: "pipe",
+			});
+		} finally {
+			rmSync(temp, { recursive: true, force: true });
+		}
+	});
+
+	it("LSM-REL-10e race example runtime smoke from dist import", { timeout: 15_000 }, () => {
+		const temp = mkdtempSync(join(tmpdir(), "lsm-race-example-smoke-"));
+		try {
+			writeFileSync(
+				join(temp, "smoke.mjs"),
+				`import { collect, race } from ${JSON.stringify(join(root, "dist/index.js"))};
+const slow = new ReadableStream({
+  start(c) { c.enqueue(new Uint8Array(0)); c.enqueue(new Uint8Array([99])); c.close(); },
+});
+const fast = new ReadableStream({
+  start(c) { c.enqueue(new Uint8Array([42])); c.close(); },
+});
+const out = await collect(race([slow, fast], {
+  isUsable: (c) => c.byteLength > 0,
+  timeoutMs: 5000,
+}));
+if (out.length !== 1 || out[0][0] !== 42) throw new Error("race smoke");`,
+			);
+			execFileSync("node", ["smoke.mjs"], { cwd: temp, stdio: "pipe" });
+		} finally {
+			rmSync(temp, { recursive: true, force: true });
+		}
+	});
+
+	it("LSM-REL-10f edge matrix authority file intact LSM-EDGE-01 through 119", () => {
+		const edgeSrc = readFileSync(join(root, "test/edge.test.ts"), "utf8");
+		expect(edgeSrc).toContain("LSM-EDGE-01");
+		expect(edgeSrc).toContain("LSM-EDGE-119");
+		expect(edgeSrc).toContain("LSM-EDGE ultra-extended §E");
+		expect(edgeSrc).toContain("LSM-EDGE ultra-extended §F");
+		const matches = edgeSrc.match(/it\("LSM-EDGE-/g);
+		expect(matches?.length).toBeGreaterThanOrEqual(119);
+	});
 });

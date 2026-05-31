@@ -3,6 +3,32 @@
 All notable changes to this project are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/); versioning follows [Semantic Versioning](https://semver.org/).
 
+## [0.8.0]
+
+### Added
+
+- **`examples/node-fetch/`** — `_fake.ts`, `race.ts`, `fallback.ts`, `merge.ts`, `tee.ts` (fake streams; typecheck vs `dist/`)
+- **`tsconfig.examples.json`** + **`pnpm typecheck:examples`**
+- **`LSM-REL-10a`–`10f`** — examples typecheck, npm pack manifest, `release:prep`, README quickstart, runtime smoke, edge integrity (`LSM-EDGE-01`–`119`)
+- **`prompts/P9-1.0.0-freeze.md`** — outline stub for **`1.0.0`** follow-up
+- **`test/edge.test.ts`** — **`LSM-EDGE-100`–`119`** §F cross-cutting matrix pins (`overallTimeoutMs`, `timeoutMs`, commit/post-emit, `mapEach`, merge order, tee validation, ensemble parity)
+
+### Changed
+
+- **`docs/integration-cookbook.md`** — full assemble/guard pairing guide (docs-only)
+- **`README.md`** — P8 status, install, examples links, **`0.8.0`**
+- **`docs/usage-guides.md`**, **`CONTRIBUTING.md`**, **`docs/img/README.md`**
+- **`scripts/release-prep.mjs`** — version sync + `npm pack` audit + `verify:docs` + examples typecheck
+- **`scripts/verify-docs.mjs`** — example paths + `_fake.ts`
+- **`docs/faq.md`**, **`docs/compatibility.md`**, **`docs/testing-strategy.md`**
+- **`docs/proposal.MD` §13** — **D13**; §26.2 **`0.8.0`** row
+- **`src/index.ts`** — `MUX_PKG_VERSION` → **`0.8.0`**
+
+### Notes
+
+- **847** tests green; API unchanged from **`0.7.0`**
+- **`1.0.0`** next: npm publish + explicit §9 API freeze per §25
+
 ## [0.7.0]
 
 ### Added
@@ -24,8 +50,8 @@ Format based on [Keep a Changelog](https://keepachangelog.com/); versioning foll
 ### Notes
 
 - Proposal §23 **`LSM-REL-02`** no-leak remapped to **`LSM-REL-09`** (export contract keeps **`LSM-REL-02`**)
-- **`examples/node-fetch/*`** deferred to P8
-- Next milestone **`1.0.0`** after P8 (docs, examples, API freeze)
+- **`examples/node-fetch/*`** shipped in **`0.8.0`** (P8)
+- **`0.8.0`** = P8 docs/examples; **`1.0.0`** = npm publish + API freeze (**D13**)
 
 ## [0.6.0]
 

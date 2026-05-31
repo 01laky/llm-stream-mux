@@ -10,6 +10,16 @@ Read [`docs/proposal.MD`](./docs/proposal.MD) before making changes. Part A is n
 
 For ecosystem context (no npm coupling): [`docs/integration-cookbook.md`](./docs/integration-cookbook.md) and [`llm-stream-assemble`](https://github.com/01laky/llm-stream-assemble).
 
+## Version ladder
+
+| Version     | Phase | Milestone                                   |
+| ----------- | ----- | ------------------------------------------- |
+| **`0.7.0`** | P7    | §23 edge-case matrix (`LSM-EDGE-*`)         |
+| **`0.8.0`** | P8    | Docs, examples, cookbook, `release:prep`    |
+| **`1.0.0`** | §25   | npm publish + explicit §9 / §6.3 API freeze |
+
+Before tagging a release: **`pnpm verify`** green, then **`pnpm release:prep`**.
+
 ## Requirements
 
 - **Zero runtime dependencies** — enforced by `pnpm verify:deps` and CI.

@@ -23,6 +23,17 @@ export function asMuxError(err: unknown): MuxError {
 	return err as MuxError;
 }
 
+export function expectAbortedByOverallTimeout(err: unknown): void {
+	const muxErr = asMuxError(err);
+	expect(muxErr.code).toBe("ABORTED");
+	expect(isMuxCancelled(muxErr)).toBe(false);
+	const cause = muxErr.cause;
+	expect(cause).toBeDefined();
+	if (cause && typeof cause === "object" && "code" in cause) {
+		expect((cause as MuxError).code).toBe("TIMEOUT");
+	}
+}
+
 export function lastCancelReason(spy: { cancelReasons: unknown[] }): unknown {
 	return spy.cancelReasons[spy.cancelReasons.length - 1];
 }

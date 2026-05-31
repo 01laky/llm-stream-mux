@@ -1,6 +1,6 @@
 # Runtime compatibility
 
-**Status:** P6 — **`AbortSignal.timeout`** required when passing **`timeoutMs`** or **`overallTimeoutMs`** (validated at call site; see **`LSM-CORE-65`**).
+**Status:** P8 (`0.8.0`) — **`AbortSignal.timeout`** required when passing **`timeoutMs`** or **`overallTimeoutMs`** (validated at call site; see **`LSM-CORE-65`**).
 
 `llm-stream-mux` is runtime-agnostic via **Web Streams** and `AbortController`. No Node-only APIs in `src/`.
 
@@ -43,7 +43,7 @@ Recommendation: supply `ReadableStream` when loser cancellation must abort HTTP 
 
 ## CI matrix
 
-GitHub Actions runs `pnpm verify` on Node 18, 20, and 22 once implementation lands (P0+). Until then, docs and zero-deps checks run in CI.
+GitHub Actions runs **`pnpm verify`** on Node **18, 20, and 22** (includes **`typecheck:examples`** and **`LSM-REL-10*`** after P8).
 
 ---
 

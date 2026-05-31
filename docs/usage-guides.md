@@ -1,6 +1,6 @@
 # Usage guides
 
-**Status:** P6 — cross-cutting **`CommonOptions`** implemented in **`0.6.0`**. API frozen in [`proposal.MD`](./proposal.MD) §9.
+**Status:** P8 — **`0.8.0`**. Strategy guides + cross-cutting **`CommonOptions`**. API feature-complete per §9; semver freeze at **`1.0.0`**. Spec: [`proposal.MD`](./proposal.MD) §9.
 
 Strategy-focused guides for `llm-stream-mux`. For ecosystem pairing with [`llm-stream-assemble`](https://github.com/01laky/llm-stream-assemble) and guard, see [integration-cookbook](./integration-cookbook.md).
 

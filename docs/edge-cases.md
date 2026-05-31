@@ -1,6 +1,6 @@
 # Edge-case showcase
 
-**Status:** Contract matrix — P7 implemented (`0.7.0`) — **`LSM-EDGE-01`–`99`** + **`LSM-REL-09`** in `test/edge.test.ts`.
+**Status:** Contract matrix — P7 (`0.7.0`) + P8 docs (`0.8.0`) — **`LSM-EDGE-01`–`119`** + **`06b`** + **`LSM-REL-09`/`10`** in `test/edge.test.ts` / `test/release.test.ts`.
 
 What breaks when you hand-roll stream orchestration, and how `llm-stream-mux` pins behavior. For positioning vs generic utilities, see [comparison](./comparison.md).
 
@@ -124,6 +124,18 @@ Diagram: [edge-matrix.svg](./img/edge-matrix.svg)
 | **`LSM-EDGE-70`–`79`** | Tee drop/bounded/ReadableStream, cancel-all, signal abort + `onFinish.aborted`, mid-stream merge abort    |
 | **`LSM-EDGE-80`–`89`** | `null`/`undefined`/binary pass-through, long empty chains, race lazy open on break, tee no-leak           |
 | **`LSM-EDGE-90`–`99`** | Merge lazy concurrency break, sync-throw `onFinish` guard, mixed empty/throw/good chains, array vs Record |
+
+### G.3 Ultra-extended §F cross-cutting (`LSM-EDGE-100`–`119`)
+
+| Range                    | Scope                                                                                                              |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------ |
+| **`LSM-EDGE-100`–`102`** | `overallTimeoutMs` → `ABORTED` + `TIMEOUT` cause (race, fallback, merge)                                           |
+| **`LSM-EDGE-103`–`106`** | `timeoutMs` disqualify, commit post-commit no failover, merge `mapEach` throw + continue, race `mapEach` transform |
+| **`LSM-EDGE-107`–`109`** | Merge `arrival` vs `round-robin`, tee `n=1`, tee `bufferLimit` validation                                          |
+| **`LSM-EDGE-110`–`112`** | Race `isUsable` junk disqualify, fallback `post-emit` splice, merge `onSourceEvent` lifecycle                      |
+| **`LSM-EDGE-113`–`115`** | Race break + lazy open audit, fallback `buffered` no primary leak, ensemble labeled parity (lazy)                  |
+| **`LSM-EDGE-116`–`118`** | ReadableStream byte `isUsable`, commit no failover event, merge concurrency slot audit on break                    |
+| **`LSM-EDGE-119`**       | Matrix doc integrity guard for §F IDs                                                                              |
 
 Race cross-refs: `LSM-RACE-05`, `LSM-RACE-09`, `LSM-RACE-19`, `LSM-RACE-28`, `LSM-RACE-43`, `LSM-RACE-57`, `LSM-RACE-62`–`74`, `LSM-RACE-80`.
 

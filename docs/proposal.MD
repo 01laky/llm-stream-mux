@@ -486,6 +486,9 @@ This dual placement is a key differentiator vs. a generic async-iterator utility
     `test/types-contract.test.ts`.
 - **D12 — Tee §23 “signal aborted” cell.** No **`TeeOptions.signal`**; operational equivalent =
   all-branch-cancel-before-read + lazy source never opened (**`LSM-EDGE-23`**).
+- **D13 — P8 ships as `0.8.0`; `1.0.0` = publish + API freeze.** P8 scope (§24) lands at
+  **`0.8.0`**. **`1.0.0`** is tagged only when §25 Definition of done is audited and §9/§6.3
+  are explicitly frozen for npm publish.
 
 ## 14. Open questions
 
@@ -766,7 +769,8 @@ when §25 Definition of done is fully satisfied.
 | `0.5.0` | P5            | `merge`/`ensemble` works (tagging, partial-failure, `order`, `concurrency`, backpressure).                      |
 | `0.6.0` | P6            | Cross-cutting complete (timeouts, `mapEach`, `SourceEvent`, `MuxResult`/`onFinish`, HWM). Full API per §9.      |
 | `0.7.0` | P7            | Edge-case matrix + contract tests all green; no-leak guarantees verified.                                       |
-| `1.0.0` | P8 + §25      | Docs, examples, cookbook, README; `release:prep` green; API frozen; Definition of done met.                     |
+| `0.8.0` | P8            | Docs, examples, cookbook, README; `release:prep` green; examples typecheck vs `dist/`.                          |
+| `1.0.0` | P8 + §25      | npm publish; §9/§6.3 API frozen under semver; Definition of done met.                                           |
 
 ### 26.3 Definition of "functional 1.0.0"
 

@@ -19,7 +19,7 @@ export default tseslint.config(
 		},
 	},
 	{
-		files: ["src/**/*.ts", "test/**/*.ts", "*.ts"],
+		files: ["src/**/*.ts", "test/**/*.ts", "examples/**/*.ts", "*.ts"],
 		languageOptions: {
 			ecmaVersion: 2022,
 			sourceType: "module",

@@ -1,9 +1,9 @@
 # llm-stream-mux
 
-![version](https://img.shields.io/badge/version-0.7.0-lightgrey)
+![version](https://img.shields.io/badge/version-0.8.0-lightgrey)
 ![node](https://img.shields.io/badge/node-%3E%3D18-339933)
 ![runtime deps](https://img.shields.io/badge/runtime_deps-0-brightgreen)
-![status](https://img.shields.io/badge/status-P7_edge-green)
+![status](https://img.shields.io/badge/status-P8_docs-green)
 [![ci](https://github.com/01laky/llm-stream-mux/actions/workflows/ci.yml/badge.svg)](https://github.com/01laky/llm-stream-mux/actions/workflows/ci.yml)
 
 **Race, fallback, merge, and tee over any stream** — generic over `T`, zero runtime dependencies, Web Streams throughout.
@@ -12,7 +12,7 @@
 
 Orchestrate streams — **not another hand-rolled `Promise.race` on fetch**.
 
-**Status:** `0.7.0` — P0–P7: core internals, interop helpers, **`tee`**, **`race`**, **`fallback`**, **`merge`/`ensemble`**, cross-cutting **`CommonOptions`**, and **§23 edge-case matrix** (`LSM-EDGE-*`). Spec: [`docs/proposal.MD`](./docs/proposal.MD).
+**Status:** `0.8.0` — P0–P8: core internals, interop helpers, **`tee`**, **`race`**, **`fallback`**, **`merge`/`ensemble`**, cross-cutting **`CommonOptions`**, **§23 edge-case matrix** (`LSM-EDGE-*`), and **runnable examples**. Spec: [`docs/proposal.MD`](./docs/proposal.MD).
 
 ---
 
@@ -89,8 +89,8 @@ Walkthrough: [docs/edge-cases.md](./docs/edge-cases.md).
 ## Install
 
 ```bash
-pnpm add llm-stream-mux
-# npm publish planned at 1.0.0 — implementation in progress
+pnpm add llm-stream-mux@0.8.0
+# pre-1.0 semver — API feature-complete per §9; freeze at 1.0.0
 ```
 
 **Requirements:** Node.js 18+ · see [compatibility matrix](./docs/compatibility.md).
@@ -175,7 +175,7 @@ Full API: [proposal §9](./docs/proposal.MD#9-public-api-final-shape).
 
 ## Examples
 
-Runnable samples (P8): [examples/README.md](./examples/README.md) — `race`, `fallback`, `merge`, `tee` with `node-fetch`.
+Runnable samples: [examples/node-fetch/](./examples/node-fetch/) — `race.ts`, `fallback.ts`, `merge.ts`, `tee.ts` (fake streams; **`pnpm typecheck:examples`** after build).
 
 For parsing examples see [`llm-stream-assemble/examples`](https://github.com/01laky/llm-stream-assemble/tree/main/examples).
 
@@ -210,7 +210,8 @@ CI runs `pnpm verify` on Node **18, 20, and 22**.
 | `pnpm verify:deps`        | fail if runtime dependencies added                                                                                                                           |
 | `pnpm diagrams:build`     | render `docs/img/*.mmd` → `.svg`                                                                                                                             |
 | `pnpm diagrams:check`     | SVGs present and newer than `.mmd`                                                                                                                           |
-| `pnpm release:prep`       | pre-tag checks when `dist/` exists                                                                                                                           |
+| `pnpm typecheck:examples` | Typecheck `examples/` against built `dist/`                                                                                                                  |
+| `pnpm release:prep`       | pre-tag checks (version, CHANGELOG, npm pack, examples)                                                                                                      |
 
 ---
 
