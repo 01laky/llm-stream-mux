@@ -10,8 +10,10 @@ import {
 	timeoutSignal,
 } from "../src/internal/abort.js";
 import { collect, toAsyncIterable, toReadable } from "../src/internal/interop.js";
+import { createOutputQueue } from "../src/internal/queue.js";
 import { normalizeSource, normalizeSources } from "../src/internal/source.js";
 import { createTelemetry } from "../src/internal/telemetry.js";
+import { validateMergeOptions, validateRaceOptions } from "../src/internal/validate-options.js";
 import { MUX_ERROR_CODES } from "../src/index.js";
 import type { MuxCancelledReason, MuxResult, SourceEvent } from "../src/types.js";
 import {
@@ -589,5 +591,122 @@ describe("LSM-CORE internals and interop", () => {
 		expect((await reader.next()).ok).toBe(false);
 		const after = await reader.next();
 		expect(after.ok).toBe(false);
+	});
+
+	it("LSM-CORE-61 createOutputQueue push shift preserves FIFO order", () => {
+		const q = createOutputQueue<number>(2);
+		q.push(1);
+		q.push(2);
+		q.push(3);
+		expect(q.shift()).toBe(1);
+		expect(q.shift()).toBe(2);
+		expect(q.shift()).toBe(3);
+	});
+
+	it("LSM-CORE-62 createOutputQueue waitForSpace blocks until shift when at highWaterMark", async () => {
+		const q = createOutputQueue<number>(2);
+		q.push(1);
+		q.push(2);
+		let unblocked = false;
+		const waiting = q.waitForSpace().then(() => {
+			unblocked = true;
+		});
+		await Promise.resolve();
+		expect(unblocked).toBe(false);
+		q.shift();
+		await waiting;
+		expect(unblocked).toBe(true);
+	});
+
+	it("LSM-CORE-63 createOutputQueue fail sets error closes and ignores further push", () => {
+		const q = createOutputQueue<number>(1);
+		const err = new Error("queue fail");
+		q.fail(err);
+		expect(q.error).toBe(err);
+		expect(q.closed).toBe(true);
+		q.push(99);
+		expect(q.length).toBe(0);
+	});
+
+	it("LSM-CORE-64 createOutputQueue close allows drain then done", async () => {
+		const q = createOutputQueue<number>(1);
+		q.push(42);
+		q.close();
+		expect(q.shift()).toBe(42);
+		expect(q.length).toBe(0);
+		await q.waitForItem();
+		expect(q.closed).toBe(true);
+	});
+
+	it("LSM-CORE-65 validateCommonOptions throws when AbortSignal.timeout missing", () => {
+		const orig = AbortSignal.timeout;
+		try {
+			// @ts-expect-error — simulate older runtimes in unit test
+			AbortSignal.timeout = undefined;
+			expect(() => validateRaceOptions({ timeoutMs: 1 })).toThrow(RangeError);
+			expect(() => validateRaceOptions({ timeoutMs: 1 })).toThrow(/AbortSignal\.timeout/);
+		} finally {
+			AbortSignal.timeout = orig;
+		}
+	});
+
+	it("LSM-CORE-66 createOutputQueue shift preserves undefined distinct from empty", () => {
+		const q = createOutputQueue<number | undefined>(1);
+		q.push(undefined);
+		expect(q.length).toBe(1);
+		expect(q.shift()).toBeUndefined();
+		expect(q.length).toBe(0);
+	});
+
+	it("LSM-CORE-67 createOutputQueue undefined at highWaterMark 1 unblocks waitForSpace on shift", async () => {
+		const q = createOutputQueue<number | undefined>(1);
+		q.push(undefined);
+		let unblocked = false;
+		const waiting = q.waitForSpace().then(() => {
+			unblocked = true;
+		});
+		await Promise.resolve();
+		expect(unblocked).toBe(false);
+		q.shift();
+		await waiting;
+		expect(unblocked).toBe(true);
+	});
+
+	it("LSM-CORE-68 createOutputQueue waitForItem resolves on close without items", async () => {
+		const q = createOutputQueue<number>(1);
+		const waiting = q.waitForItem();
+		q.close();
+		await waiting;
+		expect(q.closed).toBe(true);
+	});
+
+	it("LSM-CORE-69 createOutputQueue multiple waitForItem waiters wake on single push", async () => {
+		const q = createOutputQueue<number>(1);
+		let wakeA = false;
+		let wakeB = false;
+		const waitA = q.waitForItem().then(() => {
+			wakeA = true;
+		});
+		const waitB = q.waitForItem().then(() => {
+			wakeB = true;
+		});
+		await Promise.resolve();
+		expect(wakeA).toBe(false);
+		expect(wakeB).toBe(false);
+		q.push(1);
+		await Promise.all([waitA, waitB]);
+		expect(wakeA).toBe(true);
+		expect(wakeB).toBe(true);
+	});
+
+	it("LSM-CORE-70 validateMergeOptions rejects overallTimeoutMs when AbortSignal.timeout missing", () => {
+		const orig = AbortSignal.timeout;
+		try {
+			// @ts-expect-error — simulate older runtimes in unit test
+			AbortSignal.timeout = undefined;
+			expect(() => validateMergeOptions({ overallTimeoutMs: 1 })).toThrow(RangeError);
+		} finally {
+			AbortSignal.timeout = orig;
+		}
 	});
 });

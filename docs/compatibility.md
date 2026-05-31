@@ -1,6 +1,6 @@
 # Runtime compatibility
 
-**Status:** Pre-implementation — targets from proposal §0 and §25.
+**Status:** P6 — **`AbortSignal.timeout`** required when passing **`timeoutMs`** or **`overallTimeoutMs`** (validated at call site; see **`LSM-CORE-65`**).
 
 `llm-stream-mux` is runtime-agnostic via **Web Streams** and `AbortController`. No Node-only APIs in `src/`.
 
@@ -22,7 +22,7 @@
 Must exist at runtime (proposal §0):
 
 - `ReadableStream`, `WritableStream`, `TransformStream`
-- `AbortController`, `AbortSignal.timeout`
+- `AbortController`, `AbortSignal.timeout` (**required** when using **`timeoutMs`** / **`overallTimeoutMs`** on strategies)
 - `CountQueuingStrategy`
 - `TextEncoder` / `TextDecoder` (interop edge cases)
 

@@ -1,6 +1,6 @@
 # Usage guides
 
-**Status:** P5 — **`merge`/`ensemble`** implemented in **`0.5.0`**; `race` and **`fallback`** in **`0.3.0`** / **`0.4.0`**. API frozen in [`proposal.MD`](./proposal.MD) §9.
+**Status:** P6 — cross-cutting **`CommonOptions`** implemented in **`0.6.0`**. API frozen in [`proposal.MD`](./proposal.MD) §9.
 
 Strategy-focused guides for `llm-stream-mux`. For ecosystem pairing with [`llm-stream-assemble`](https://github.com/01laky/llm-stream-assemble) and guard, see [integration-cookbook](./integration-cookbook.md).
 
@@ -9,7 +9,7 @@ Strategy-focused guides for `llm-stream-mux`. For ecosystem pairing with [`llm-s
 ## Core concepts
 
 - **Generic over `T`** — mux never defines an LLM event model. `T` can be `Uint8Array`, your parsed events, or anything else.
-- **Lazy start** — sources (and lazy thunks) begin only when the consumer starts iterating.
+- **Lazy start** — sources (and lazy thunks) begin only when the consumer starts iterating (`race()`, `fallback()`, `merge()` also arm **`timeoutMs`** / **`overallTimeoutMs`** on first `.next()`).
 - **Web Streams internally** — strategies return `AsyncIterable`; `tee` returns `ReadableStream[]`. Use `toReadable` / `toAsyncIterable` at boundaries.
 
 Hooks (all optional): `isError`, `isUsable`, `isFinal`, `mapEach` — evaluated on raw `T` before `mapEach`. See proposal §5.
@@ -77,7 +77,33 @@ for await (const tagged of merge<MyEvent>(
 }
 ```
 
-Options: `failFast`, `order: "arrival" | "round-robin"`, `concurrency`. Diagram: [merge-tagged.svg](./img/merge-tagged.svg).
+Options: `failFast`, `order: "arrival" | "round-robin"`, `concurrency`, `overallTimeoutMs`, `highWaterMark`, `sourceHighWaterMark` (ReadableStream sources). **`timeoutMs` is not applied on merge.** Diagram: [merge-tagged.svg](./img/merge-tagged.svg).
+
+---
+
+## Cross-cutting timers and backpressure
+
+All async-iterable strategies share optional **`CommonOptions`** (not **`tee`**):
+
+```ts
+import { race, fallback, merge } from "llm-stream-mux";
+
+// Per-source time-to-first-usable (race + fallback only)
+await collect(race([slow, fast], { timeoutMs: 5000 }));
+
+// Whole-operation deadline (race, fallback, merge)
+const iter = merge([a, b], { overallTimeoutMs: 30_000 })[Symbol.asyncIterator]();
+
+// Output queue depth (default 1 — same as pre-0.6.0)
+await collect(fallback([primary, backup], { highWaterMark: 2 }));
+
+// ReadableStream-only per-source input buffering
+await collect(merge([streamA, streamB], { sourceHighWaterMark: 4 }));
+```
+
+Compose with user abort via **`signal`** — whichever fires first wins (`LSM-X-14`, `LSM-X-15`).
+
+Requires **`AbortSignal.timeout`** when using timer options (Node ≥ 18, modern browsers). See [compatibility](./compatibility.md).
 
 ---
 

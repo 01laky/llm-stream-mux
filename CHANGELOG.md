@@ -3,6 +3,32 @@
 All notable changes to this project are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/); versioning follows [Semantic Versioning](https://semver.org/).
 
+## [0.6.0]
+
+### Added
+
+- **`src/internal/queue.ts`** — shared output queue with configurable **`highWaterMark`** (default `1`)
+- **`src/internal/validate-options.ts`** — shared validation for **`timeoutMs`**, **`overallTimeoutMs`**, **`highWaterMark`**, **`sourceHighWaterMark`**
+- **`src/internal/timeouts.ts`** — **`wireOverallTimeout`**, **`createTtfUsableTimer`**, overall/per-source timeout helpers
+- **`test/cross.test.ts`** — `LSM-X-01`–`115` cross-cutting contract tests
+- **`test/core.test.ts`** — `LSM-CORE-61`–`70` (`queue.ts` unit tests)
+- **`LSM-REL-08a/b`** — dist contract + smoke for cross-cutting options and **`MUX_PKG_VERSION === "0.6.0"`**
+
+### Changed
+
+- **`race`**, **`fallback`**, **`merge`/`ensemble`** — wire **`timeoutMs`** (race + fallback), **`overallTimeoutMs`**, **`highWaterMark`**, **`sourceHighWaterMark`** (ReadableStream only)
+- **`src/index.ts`** — `MUX_PKG_VERSION` → **`0.6.0`**
+- **`scripts/smoke-package.mjs`** — smoke **`race({ timeoutMs })`** + **`merge({ overallTimeoutMs })`**
+- **`test/release.test.ts`** — `LSM-REL-04b`–`07b` assert **`CommonOptions`** timer/HWM fields in d.ts
+- **`docs/img/core-internals.mmd`** + SVG — queue, validate-options, timeout wiring
+- **Docs** — testing strategy, edge-cases § cross-cutting, usage-guides timer/HWM sections, compatibility **`AbortSignal.timeout`** note
+
+### Notes
+
+- **`timeoutMs`** intentionally ignored on **`merge`** (per §7.6)
+- `test/edge.test.ts` full matrix deferred to P7
+- Next milestone **`0.7.0`** after P7 (edge matrix)
+
 ## [0.5.0]
 
 ### Added

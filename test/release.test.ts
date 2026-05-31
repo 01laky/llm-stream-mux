@@ -23,6 +23,19 @@ function exportPath(relative: string) {
 	return join(root, relative.replace(/^\.\//, ""));
 }
 
+const COMMON_OPTION_FIELDS = [
+	"timeoutMs",
+	"overallTimeoutMs",
+	"highWaterMark",
+	"sourceHighWaterMark",
+] as const;
+
+function expectCommonOptionsInDts(dts: string): void {
+	for (const field of COMMON_OPTION_FIELDS) {
+		expect(dts).toContain(`${field}?:`);
+	}
+}
+
 describe("LSM-REL-01 release scaffold", () => {
 	it("LSM-REL-01 MUX_PKG_VERSION matches package.json", () => {
 		expect(MUX_PKG_VERSION).toBe(readPkg().version);
@@ -137,6 +150,7 @@ if (empty.length !== 0) throw new Error("tee drain");`,
 		expect(dts).toMatch(/declare function fallback\b/);
 		expect(dts).toMatch(/declare function merge\b/);
 		expect(dts).toMatch(/declare const ensemble\b/);
+		expectCommonOptionsInDts(dts);
 		expect(dts).not.toContain("normalizeSource");
 		expect(dts).not.toContain("createTelemetry");
 		expect(dts).not.toMatch(/declare function muxError\b/);
@@ -200,6 +214,7 @@ const { race, collect } = require("llm-stream-mux");
 		expect(dts).toMatch(/declare function fallback\b/);
 		expect(dts).toMatch(/declare function merge\b/);
 		expect(dts).toMatch(/declare const ensemble\b/);
+		expectCommonOptionsInDts(dts);
 		expect(dts).not.toContain("normalizeSource");
 		expect(dts).not.toContain("createTelemetry");
 		expect(dts).not.toMatch(/declare function muxError\b/);
@@ -264,6 +279,7 @@ const { fallback, collect } = require("llm-stream-mux");
 		expect(dts).toMatch(/declare function tee\b/);
 		expect(dts).toMatch(/declare function merge\b/);
 		expect(dts).toMatch(/declare const ensemble\b/);
+		expectCommonOptionsInDts(dts);
 		expect(dts).not.toContain("normalizeSource");
 		expect(dts).not.toContain("createTelemetry");
 		expect(dts).not.toMatch(/declare function muxError\b/);
@@ -338,6 +354,7 @@ const { merge, ensemble, collect } = require("llm-stream-mux");
 		expect(dts).toMatch(/declare function race\b/);
 		expect(dts).toMatch(/declare function fallback\b/);
 		expect(dts).toMatch(/declare function tee\b/);
+		expectCommonOptionsInDts(dts);
 		expect(dts).not.toContain("normalizeSource");
 		expect(dts).not.toContain("createTelemetry");
 		expect(dts).not.toMatch(/declare function muxError\b/);
@@ -348,4 +365,55 @@ const { merge, ensemble, collect } = require("llm-stream-mux");
 			expect(body).not.toContain("node_modules");
 		}
 	});
+});
+
+describe("LSM-REL-08 cross-cutting dist contract", () => {
+	it("LSM-REL-08a d.ts CommonOptions fields and MUX_PKG_VERSION 0.6.0", () => {
+		const dts = readFileSync(join(root, "dist/index.d.ts"), "utf8");
+		expectCommonOptionsInDts(dts);
+		expect(MUX_PKG_VERSION).toBe("0.6.0");
+		expect(readPkg().version).toBe("0.6.0");
+	});
+
+	it(
+		"LSM-REL-08b race timeoutMs and merge overallTimeoutMs smoke from tarball",
+		{
+			timeout: TARBALL_SMOKE_MS,
+		},
+		() => {
+			const temp = mkdtempSync(join(tmpdir(), "lsm-cross-smoke-"));
+			try {
+				execFileSync("npm", ["pack", "--pack-destination", temp], { cwd: root, stdio: "pipe" });
+				const tarball = readdirSync(temp).find((f) => f.endsWith(".tgz"));
+				expect(tarball).toBeTruthy();
+
+				writeFileSync(
+					join(temp, "package.json"),
+					JSON.stringify({ type: "module", dependencies: {} }, null, 2),
+				);
+				execFileSync("npm", ["install", "--ignore-scripts", join(temp, tarball!)], {
+					cwd: temp,
+					stdio: "pipe",
+				});
+
+				writeFileSync(
+					join(temp, "esm.mjs"),
+					`import { race, merge, collect } from "llm-stream-mux";
+const raceOut = await collect(race([
+  (async function* () { yield 1; })(),
+], { timeoutMs: 60000 }));
+if (raceOut[0] !== 1) throw new Error("race timeoutMs smoke");
+const mergeIter = merge([
+  (async function* () { yield 1; })(),
+], { overallTimeoutMs: 60000 })[Symbol.asyncIterator]();
+const step = await mergeIter.next();
+if (step.done || step.value.kind !== "value") throw new Error("merge overallTimeoutMs smoke");
+await mergeIter.return();`,
+				);
+				execFileSync("node", ["esm.mjs"], { cwd: temp, stdio: "pipe" });
+			} finally {
+				rmSync(temp, { recursive: true, force: true });
+			}
+		},
+	);
 });

@@ -1,7 +1,9 @@
 import { muxError } from "../errors.js";
 import { muxCancelledReason } from "./abort.js";
+import { createOutputQueue } from "./queue.js";
 import type { NormalizedReader, SourceReadResult } from "./source.js";
 import { createTelemetry } from "./telemetry.js";
+import { timeoutMuxError, wireOverallTimeout } from "./timeouts.js";
 import type {
 	MergeOptions,
 	MuxCancelled,
@@ -44,6 +46,8 @@ export function createMergeIterable<T, U = T>(
 	const isFinal = opts.isFinal ?? (() => false);
 	const mapEach = opts.mapEach ?? ((item: T) => item as unknown as U);
 	const maxConcurrency = Math.min(opts.concurrency ?? readers.length, Math.max(readers.length, 1));
+	const outputHighWaterMark = opts.highWaterMark ?? 1;
+	const overallTimeoutMs = opts.overallTimeoutMs;
 
 	let iterableActive = false;
 
@@ -76,12 +80,10 @@ export function createMergeIterable<T, U = T>(
 			const waitingQueue = [...readerOrder];
 			const ready = new Map<string, SourceReadResult<T>>();
 			let readyWaiters: Array<() => void> = [];
+			let disarmOverall: (() => void) | undefined;
 
-			const queue: Tagged<U>[] = [];
-			let queueError: unknown | null = null;
-			let queueClosed = false;
-			let queueWaiters: Array<() => void> = [];
-			let queueSpaceWaiters: Array<() => void> = [];
+			const outputQueue = createOutputQueue<Tagged<U>>(outputHighWaterMark);
+			const queueFailed = () => outputQueue.error !== null;
 
 			const readerById = (id: string): NormalizedReader<T> => {
 				const reader = readers.find((r) => r.id === id);
@@ -92,33 +94,24 @@ export function createMergeIterable<T, U = T>(
 			const finishOnce = () => {
 				if (finished) return;
 				finished = true;
+				disarmOverall?.();
 				telemetry.finish();
 			};
 
-			const notifyConsumer = () => {
-				const waiters = queueWaiters;
-				queueWaiters = [];
-				for (const wake of waiters) wake();
+			const failConsumer = (err: unknown) => {
+				outputQueue.fail(err);
 			};
 
-			const notifyQueueSpace = () => {
-				if (queue.length >= 1) return;
-				const waiters = queueSpaceWaiters;
-				queueSpaceWaiters = [];
-				for (const wake of waiters) wake();
+			const pushTag = (tag: Tagged<U>) => {
+				outputQueue.push(tag);
 			};
+
+			const waitQueueSpace = (): Promise<void> => outputQueue.waitForSpace();
 
 			const notifyReady = () => {
 				const waiters = readyWaiters;
 				readyWaiters = [];
 				for (const wake of waiters) wake();
-			};
-
-			const waitQueueSpace = (): Promise<void> => {
-				if (queue.length < 1) return Promise.resolve();
-				return new Promise((resolve) => {
-					queueSpaceWaiters.push(resolve);
-				});
 			};
 
 			const waitReady = (): Promise<void> => {
@@ -128,18 +121,6 @@ export function createMergeIterable<T, U = T>(
 				});
 			};
 
-			const failConsumer = (err: unknown) => {
-				queueError = err;
-				queueClosed = true;
-				notifyConsumer();
-			};
-
-			const pushTag = (tag: Tagged<U>) => {
-				queue.push(tag);
-				notifyQueueSpace();
-				notifyConsumer();
-			};
-
 			const cancelSource = async (reader: NormalizedReader<T>, reason: MuxCancelled) => {
 				if (cancelled.has(reader.id)) return;
 				cancelled.add(reader.id);
@@ -147,16 +128,32 @@ export function createMergeIterable<T, U = T>(
 				swallowCancel(reader.cancel(reason));
 			};
 
-			const abortAll = async (reason: MuxCancelled) => {
+			const abortAll = async (reason: MuxCancelled, cause?: unknown) => {
 				if (reason.reason === "aborted") telemetry.setAborted(true);
+				disarmOverall?.();
 				await Promise.all(
 					readers
 						.filter((r) => telemetry.ensureSource(r.id).started)
 						.map((r) => cancelSource(r, reason)),
 				);
-				failConsumer(muxError({ code: "ABORTED", cause: opCtrl.signal.reason }));
+				failConsumer(muxError({ code: "ABORTED", cause: cause ?? opCtrl.signal.reason }));
 				finishOnce();
 				coordinatorDone = true;
+			};
+
+			const handleOverallTimeout = async () => {
+				if (finished) return;
+				telemetry.setAborted(true);
+				for (const reader of readers) {
+					if (telemetry.ensureSource(reader.id).started) {
+						telemetry.emit({
+							source: reader.id,
+							type: "timeout",
+							error: timeoutMuxError(reader.id),
+						});
+					}
+				}
+				await abortAll(muxCancelledReason("aborted"), muxError({ code: "TIMEOUT" }));
 			};
 
 			const failFastAbort = async (trigger: MuxError) => {
@@ -227,8 +224,7 @@ export function createMergeIterable<T, U = T>(
 
 			const maybeClose = () => {
 				if (dropped.size === readerOrder.length && ready.size === 0) {
-					queueClosed = true;
-					notifyConsumer();
+					outputQueue.close();
 					finishOnce();
 					coordinatorDone = true;
 				}
@@ -245,16 +241,16 @@ export function createMergeIterable<T, U = T>(
 			};
 
 			const armRead = (id: string) => {
-				if (dropped.has(id) || cancelled.has(id) || queueError) return;
+				if (dropped.has(id) || cancelled.has(id) || queueFailed()) return;
 				void readerById(id)
 					.next()
 					.then((result) => {
-						if (dropped.has(id) || cancelled.has(id) || queueError) return;
+						if (dropped.has(id) || cancelled.has(id) || queueFailed()) return;
 						ready.set(id, result);
 						notifyReady();
 					})
 					.catch((cause) => {
-						if (dropped.has(id) || cancelled.has(id) || queueError) return;
+						if (dropped.has(id) || cancelled.has(id) || queueFailed()) return;
 						ready.set(id, { ok: false, error: cause });
 						notifyReady();
 					});
@@ -304,7 +300,7 @@ export function createMergeIterable<T, U = T>(
 
 				if (isFinal(item)) {
 					emitValueTag(id, item);
-					if (queueError) return;
+					if (queueFailed()) return;
 					telemetry.emit({ source: id, type: "final" });
 					emitDoneTag(id);
 					dropSource(id);
@@ -312,7 +308,7 @@ export function createMergeIterable<T, U = T>(
 				}
 
 				emitValueTag(id, item);
-				if (queueError) return;
+				if (queueFailed()) return;
 				armRead(id);
 			};
 
@@ -329,9 +325,9 @@ export function createMergeIterable<T, U = T>(
 			};
 
 			const pump = async () => {
-				while (!queueError && !queueClosed) {
+				while (!queueFailed() && !outputQueue.closed) {
 					await waitQueueSpace();
-					if (queueError || queueClosed) break;
+					if (queueFailed() || outputQueue.closed) break;
 
 					if (ready.size === 0) {
 						if (dropped.size === readerOrder.length) {
@@ -339,7 +335,7 @@ export function createMergeIterable<T, U = T>(
 							break;
 						}
 						await waitReady();
-						if (queueError || queueClosed) break;
+						if (queueFailed() || outputQueue.closed) break;
 					}
 
 					const id = pickNextId();
@@ -362,8 +358,7 @@ export function createMergeIterable<T, U = T>(
 
 			const runCoordinator = async () => {
 				if (readers.length === 0) {
-					queueClosed = true;
-					notifyConsumer();
+					outputQueue.close();
 					finishOnce();
 					coordinatorDone = true;
 					return;
@@ -375,6 +370,12 @@ export function createMergeIterable<T, U = T>(
 					finishOnce();
 					coordinatorDone = true;
 					return;
+				}
+
+				if (overallTimeoutMs !== undefined) {
+					disarmOverall = wireOverallTimeout(overallTimeoutMs, opCtrl, () => {
+						void handleOverallTimeout();
+					});
 				}
 
 				opCtrl.signal.addEventListener(
@@ -399,31 +400,25 @@ export function createMergeIterable<T, U = T>(
 
 			return {
 				async next(): Promise<IteratorResult<Tagged<U>>> {
-					if (queueError) throw queueError;
+					if (outputQueue.error) throw outputQueue.error;
 
 					ensureStarted();
 
-					if (queue.length > 0) {
-						const value = queue.shift()!;
-						notifyQueueSpace();
-						return { done: false, value };
+					if (outputQueue.length > 0) {
+						return { done: false, value: outputQueue.shift()! };
 					}
 
-					if (queueClosed && coordinatorDone) {
-						if (queueError) throw queueError;
+					if (outputQueue.closed && coordinatorDone) {
+						if (outputQueue.error) throw outputQueue.error;
 						return { done: true, value: undefined };
 					}
 
-					await new Promise<void>((resolve) => {
-						queueWaiters.push(resolve);
-					});
+					await outputQueue.waitForItem();
 
-					if (queueError) throw queueError;
+					if (outputQueue.error) throw outputQueue.error;
 
-					if (queue.length > 0) {
-						const value = queue.shift()!;
-						notifyQueueSpace();
-						return { done: false, value };
+					if (outputQueue.length > 0) {
+						return { done: false, value: outputQueue.shift()! };
 					}
 
 					return { done: true, value: undefined };
@@ -439,12 +434,4 @@ export function createMergeIterable<T, U = T>(
 			};
 		},
 	};
-}
-
-export function validateMergeOptions(opts?: MergeOptions<unknown, unknown>): void {
-	if (opts?.concurrency === undefined) return;
-	const c = opts.concurrency;
-	if (!Number.isInteger(c) || c < 1) {
-		throw new RangeError(`merge: concurrency must be a positive integer, got ${String(c)}`);
-	}
 }

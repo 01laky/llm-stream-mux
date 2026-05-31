@@ -9,11 +9,14 @@ flowchart TB
     merge["merge() / ensemble"]
   end
 
-  subgraph internal["Internal (P1)"]
+  subgraph internal["Internal (P1 + P6)"]
     source["normalizeSource / normalizeSources"]
     abort["combineSignals / timeoutSignal"]
     errors["muxError()"]
     telemetry["createTelemetry()"]
+    queue["createOutputQueue()"]
+    validate["validateCommonOptions()"]
+    timeouts["wireOverallTimeout / TTF-usable timers"]
   end
 
   subgraph sources["Source forms"]
@@ -33,6 +36,15 @@ flowchart TB
   abort --> race
   abort --> fb
   abort --> merge
+  queue --> race
+  queue --> fb
+  queue --> merge
+  validate --> race
+  validate --> fb
+  validate --> merge
+  timeouts --> race
+  timeouts --> fb
+  timeouts --> merge
   errors --> tee
   errors --> race
   errors --> fb

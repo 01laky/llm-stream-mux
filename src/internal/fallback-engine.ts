@@ -1,7 +1,9 @@
 import { muxError } from "../errors.js";
-import { muxCancelledReason, timeoutSignal } from "./abort.js";
+import { muxCancelledReason } from "./abort.js";
+import { createOutputQueue } from "./queue.js";
 import type { NormalizedReader, SourceReadResult } from "./source.js";
 import { createTelemetry } from "./telemetry.js";
+import { createTtfUsableTimer, timeoutMuxError, wireOverallTimeout } from "./timeouts.js";
 import type {
 	FailoverPolicy,
 	FallbackOptions,
@@ -42,6 +44,8 @@ export function createFallbackIterable<T, U = T>(
 	const isFinal = opts.isFinal ?? (() => false);
 	const mapEach = opts.mapEach ?? ((item: T) => item as unknown as U);
 	const timeoutMs = opts.timeoutMs;
+	const overallTimeoutMs = opts.overallTimeoutMs;
+	const outputHighWaterMark = opts.highWaterMark ?? 1;
 
 	let iterableActive = false;
 
@@ -70,14 +74,12 @@ export function createFallbackIterable<T, U = T>(
 			let internalBuffer: T[] = [];
 			const failedErrors: MuxError[] = [];
 			const cancelled = new Set<string>();
-			let attemptTimeoutCtrl: AbortController | undefined;
 			let winnerId: string | undefined;
+			let disarmOverall: (() => void) | undefined;
+			let attemptTimerDisarm: (() => void) | undefined;
 
-			const queue: U[] = [];
-			let queueError: unknown | null = null;
-			let queueClosed = false;
-			let queueWaiters: Array<() => void> = [];
-			let queueSpaceWaiters: Array<() => void> = [];
+			const outputQueue = createOutputQueue<U>(outputHighWaterMark);
+			const queueFailed = () => outputQueue.error !== null;
 
 			const readerAt = (index: number): NormalizedReader<T> => readers[index]!;
 
@@ -87,81 +89,54 @@ export function createFallbackIterable<T, U = T>(
 				if (finished) return;
 				finished = true;
 				disarmAttemptTimeout();
+				disarmOverall?.();
 				telemetry.finish();
 			};
 
-			const notifyConsumer = () => {
-				const waiters = queueWaiters;
-				queueWaiters = [];
-				for (const wake of waiters) wake();
-			};
-
-			const notifyQueueSpace = () => {
-				if (queue.length >= 1) return;
-				const waiters = queueSpaceWaiters;
-				queueSpaceWaiters = [];
-				for (const wake of waiters) wake();
-			};
-
-			const waitQueueSpace = (): Promise<void> => {
-				if (queue.length < 1) return Promise.resolve();
-				return new Promise((resolve) => {
-					queueSpaceWaiters.push(resolve);
-				});
-			};
-
 			const failConsumer = (err: unknown) => {
-				queueError = err;
-				queueClosed = true;
-				notifyConsumer();
+				outputQueue.fail(err);
 			};
+
+			const waitQueueSpace = (): Promise<void> => outputQueue.waitForSpace();
 
 			const mapAndEnqueue = async (item: T, sourceId: string): Promise<boolean> => {
 				await waitQueueSpace();
-				if (queueError || opCtrl.signal.aborted) return false;
+				if (queueFailed() || opCtrl.signal.aborted) return false;
 				try {
 					const mapped = mapEach(item, sourceId);
 					telemetry.incrementItems(sourceId);
-					queue.push(mapped);
-					notifyQueueSpace();
-					notifyConsumer();
+					outputQueue.push(mapped);
 					return true;
 				} catch (cause) {
-					failConsumer(muxError({ code: "SOURCE_ERROR", source: sourceId, cause }));
+					const err = muxError({ code: "SOURCE_ERROR", source: sourceId, cause });
+					if (!committed && activeIndex + 1 < readers.length && policy === "commit") {
+						await failActiveSource(err, false);
+						return false;
+					}
+					failConsumer(err);
 					return false;
 				}
 			};
 
 			const disarmAttemptTimeout = () => {
-				if (attemptTimeoutCtrl) {
-					attemptTimeoutCtrl.abort();
-					attemptTimeoutCtrl = undefined;
+				if (attemptTimerDisarm) {
+					attemptTimerDisarm();
+					attemptTimerDisarm = undefined;
 				}
 			};
 
 			const armAttemptTimeout = (id: string) => {
 				disarmAttemptTimeout();
 				if (timeoutMs === undefined) return;
-				const timer = timeoutSignal(timeoutMs);
-				const onTimeout = () => {
+				attemptTimerDisarm = createTtfUsableTimer(timeoutMs, opCtrl, () => {
 					if (!opCtrl.signal.aborted && !committed && !cancelled.has(id)) {
 						void handleAttemptTimeout(id);
 					}
-				};
-				timer.addEventListener("abort", onTimeout, { once: true });
-				attemptTimeoutCtrl = new AbortController();
-				opCtrl.signal.addEventListener(
-					"abort",
-					() => {
-						disarmAttemptTimeout();
-					},
-					{ once: true },
-				);
-				void timer;
+				});
 			};
 
 			const handleAttemptTimeout = async (id: string) => {
-				if (finished || queueError || cancelled.has(id) || committed) return;
+				if (finished || queueFailed() || cancelled.has(id) || committed) return;
 				const err = muxError({ code: "TIMEOUT", source: id });
 				telemetry.emit({ source: id, type: "timeout", error: err });
 				await failActiveSource(err, false);
@@ -174,17 +149,32 @@ export function createFallbackIterable<T, U = T>(
 				swallowCancel(reader.cancel(reason));
 			};
 
-			const abortAll = async (reason: MuxCancelled) => {
+			const abortAll = async (reason: MuxCancelled, cause?: unknown) => {
 				if (reason.reason === "aborted") telemetry.setAborted(true);
 				disarmAttemptTimeout();
+				disarmOverall?.();
 				await Promise.all(
 					readers
 						.filter((r) => !cancelled.has(r.id) && telemetry.ensureSource(r.id).started)
 						.map((r) => cancelSource(r, reason)),
 				);
-				failConsumer(muxError({ code: "ABORTED", cause: opCtrl.signal.reason }));
+				failConsumer(muxError({ code: "ABORTED", cause: cause ?? opCtrl.signal.reason }));
 				finishOnce();
 				coordinatorDone = true;
+			};
+
+			const handleOverallTimeout = async () => {
+				if (finished) return;
+				telemetry.setAborted(true);
+				const id = activeId();
+				if (telemetry.ensureSource(id).started) {
+					telemetry.emit({
+						source: id,
+						type: "timeout",
+						error: timeoutMuxError(id),
+					});
+				}
+				await abortAll(muxCancelledReason("aborted"), muxError({ code: "TIMEOUT" }));
 			};
 
 			const recordFailure = (err: MuxError) => {
@@ -200,6 +190,9 @@ export function createFallbackIterable<T, U = T>(
 				await cancelSource(readerAt(activeIndex), muxCancelledReason("failover"));
 				internalBuffer = [];
 				committed = false;
+				if (activeIndex + 1 < readers.length && policy === "commit") {
+					telemetry.emit({ source: id, type: "failover" });
+				}
 				await tryFailover();
 			};
 
@@ -235,12 +228,12 @@ export function createFallbackIterable<T, U = T>(
 
 			const reachCommit = async (triggerItem: T, fromFinal: boolean): Promise<boolean> => {
 				const id = activeId();
-				committed = true;
 				disarmAttemptTimeout();
-				telemetry.setWinner(id);
-				winnerId = id;
 
 				if (policy === "buffered") {
+					committed = true;
+					telemetry.setWinner(id);
+					winnerId = id;
 					internalBuffer.push(triggerItem);
 					return true;
 				}
@@ -249,11 +242,14 @@ export function createFallbackIterable<T, U = T>(
 
 				if (!(await flushInternalBuffer(id, true))) return false;
 
+				committed = true;
+				telemetry.setWinner(id);
+				winnerId = id;
+
 				if (fromFinal) {
 					telemetry.markCompleted(id);
 					telemetry.emit({ source: id, type: "done" });
-					queueClosed = true;
-					notifyConsumer();
+					outputQueue.close();
 					finishOnce();
 					coordinatorDone = true;
 				}
@@ -269,8 +265,7 @@ export function createFallbackIterable<T, U = T>(
 				telemetry.emit({ source: id, type: "done" });
 				telemetry.setWinner(id);
 				winnerId = id;
-				queueClosed = true;
-				notifyConsumer();
+				outputQueue.close();
 				finishOnce();
 				coordinatorDone = true;
 				return true;
@@ -330,8 +325,7 @@ export function createFallbackIterable<T, U = T>(
 					if (!(await mapAndEnqueue(item, id))) return "done";
 					telemetry.markCompleted(id);
 					telemetry.emit({ source: id, type: "done" });
-					queueClosed = true;
-					notifyConsumer();
+					outputQueue.close();
 					finishOnce();
 					coordinatorDone = true;
 					return "done";
@@ -407,8 +401,7 @@ export function createFallbackIterable<T, U = T>(
 					telemetry.setWinner(id);
 					winnerId = id;
 				}
-				queueClosed = true;
-				notifyConsumer();
+				outputQueue.close();
 				finishOnce();
 				coordinatorDone = true;
 				return "done";
@@ -418,15 +411,15 @@ export function createFallbackIterable<T, U = T>(
 				const reader = readerAt(activeIndex);
 				const id = reader.id;
 
-				while (!opCtrl.signal.aborted && !queueError && !queueClosed) {
+				while (!opCtrl.signal.aborted && !queueFailed() && !outputQueue.closed) {
 					await waitQueueSpace();
-					if (opCtrl.signal.aborted || queueError || queueClosed) break;
+					if (opCtrl.signal.aborted || queueFailed() || outputQueue.closed) break;
 
 					const result = await reader.next();
 					if (cancelled.has(id)) return;
 
 					const status = await processResult(result);
-					if (status === "done" || queueError || queueClosed) return;
+					if (status === "done" || queueFailed() || outputQueue.closed) return;
 				}
 
 				if (opCtrl.signal.aborted) {
@@ -453,6 +446,12 @@ export function createFallbackIterable<T, U = T>(
 					return;
 				}
 
+				if (overallTimeoutMs !== undefined) {
+					disarmOverall = wireOverallTimeout(overallTimeoutMs, opCtrl, () => {
+						void handleOverallTimeout();
+					});
+				}
+
 				opCtrl.signal.addEventListener(
 					"abort",
 					() => {
@@ -474,31 +473,25 @@ export function createFallbackIterable<T, U = T>(
 
 			return {
 				async next(): Promise<IteratorResult<U>> {
-					if (queueError) throw queueError;
+					if (outputQueue.error) throw outputQueue.error;
 
 					ensureStarted();
 
-					if (queue.length > 0) {
-						const value = queue.shift()!;
-						notifyQueueSpace();
-						return { done: false, value };
+					if (outputQueue.length > 0) {
+						return { done: false, value: outputQueue.shift()! };
 					}
 
-					if (queueClosed && coordinatorDone) {
-						if (queueError) throw queueError;
+					if (outputQueue.closed && coordinatorDone) {
+						if (outputQueue.error) throw outputQueue.error;
 						return { done: true, value: undefined };
 					}
 
-					await new Promise<void>((resolve) => {
-						queueWaiters.push(resolve);
-					});
+					await outputQueue.waitForItem();
 
-					if (queueError) throw queueError;
+					if (outputQueue.error) throw outputQueue.error;
 
-					if (queue.length > 0) {
-						const value = queue.shift()!;
-						notifyQueueSpace();
-						return { done: false, value };
+					if (outputQueue.length > 0) {
+						return { done: false, value: outputQueue.shift()! };
 					}
 
 					return { done: true, value: undefined };

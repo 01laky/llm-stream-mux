@@ -13,11 +13,45 @@ export interface NormalizedReader<T> {
 
 type ResolvedSource<T> = ReadableStream<T> | AsyncIterable<T>;
 
+export interface NormalizeSourceOptions {
+	sourceHighWaterMark?: number;
+}
+
 function isReadableStream<T>(value: ResolvedSource<T>): value is ReadableStream<T> {
 	return typeof (value as ReadableStream<T>).getReader === "function";
 }
 
-function createReader<T>(source: Source<T>, id: string): NormalizedReader<T> {
+function wrapReadableStreamWithHwm<T>(stream: ReadableStream<T>, hwm: number): ReadableStream<T> {
+	let reader: ReadableStreamDefaultReader<T> | undefined;
+	return new ReadableStream<T>(
+		{
+			async pull(controller) {
+				if (!reader) reader = stream.getReader();
+				const result = await reader.read();
+				if (result.done) {
+					controller.close();
+					return;
+				}
+				controller.enqueue(result.value);
+			},
+			cancel(reason) {
+				if (reader) {
+					const activeReader = reader;
+					reader = undefined;
+					return activeReader.cancel(reason);
+				}
+				return stream.cancel(reason);
+			},
+		},
+		{ highWaterMark: hwm, size: () => 1 },
+	);
+}
+
+function createReader<T>(
+	source: Source<T>,
+	id: string,
+	normalizeOpts: NormalizeSourceOptions = {},
+): NormalizedReader<T> {
 	let resolved: ResolvedSource<T> | undefined;
 	let lazyFactory: (() => Source<T>) | undefined;
 	let cancelled = false;
@@ -29,7 +63,11 @@ function createReader<T>(source: Source<T>, id: string): NormalizedReader<T> {
 		if (lazyFactory !== undefined) {
 			const factory = lazyFactory;
 			lazyFactory = undefined;
-			resolved = factory() as ResolvedSource<T>;
+			let next = factory() as ResolvedSource<T>;
+			if (normalizeOpts.sourceHighWaterMark !== undefined && isReadableStream(next)) {
+				next = wrapReadableStreamWithHwm(next, normalizeOpts.sourceHighWaterMark);
+			}
+			resolved = next;
 			return resolved;
 		}
 		throw new Error("normalizeSource: source not initialized");
@@ -38,7 +76,11 @@ function createReader<T>(source: Source<T>, id: string): NormalizedReader<T> {
 	if (typeof source === "function") {
 		lazyFactory = source;
 	} else {
-		resolved = source as ResolvedSource<T>;
+		let resolvedSource = source as ResolvedSource<T>;
+		if (normalizeOpts.sourceHighWaterMark !== undefined && isReadableStream(resolvedSource)) {
+			resolvedSource = wrapReadableStreamWithHwm(resolvedSource, normalizeOpts.sourceHighWaterMark);
+		}
+		resolved = resolvedSource;
 	}
 
 	const swallow = async (promise: Promise<unknown>) => {
@@ -103,11 +145,18 @@ function createReader<T>(source: Source<T>, id: string): NormalizedReader<T> {
 	};
 }
 
-export function normalizeSource<T>(source: Source<T>, id: string): NormalizedReader<T> {
-	return createReader(source, id);
+export function normalizeSource<T>(
+	source: Source<T>,
+	id: string,
+	opts?: NormalizeSourceOptions,
+): NormalizedReader<T> {
+	return createReader(source, id, opts);
 }
 
-export function normalizeSources<T>(sources: Sources<T>): NormalizedReader<T>[] {
+export function normalizeSources<T>(
+	sources: Sources<T>,
+	opts?: NormalizeSourceOptions,
+): NormalizedReader<T>[] {
 	if (Array.isArray(sources)) {
 		if (sources.length === 0) return [];
 		if ("id" in sources[0]!) {
@@ -119,10 +168,12 @@ export function normalizeSources<T>(sources: Sources<T>): NormalizedReader<T>[] 
 				}
 				seen.add(entry.id);
 			}
-			return labeled.map((entry) => normalizeSource(entry.source, entry.id));
+			return labeled.map((entry) => normalizeSource(entry.source, entry.id, opts));
 		}
-		return (sources as Source<T>[]).map((source, index) => normalizeSource(source, String(index)));
+		return (sources as Source<T>[]).map((source, index) =>
+			normalizeSource(source, String(index), opts),
+		);
 	}
 
-	return Object.entries(sources).map(([id, source]) => normalizeSource(source, id));
+	return Object.entries(sources).map(([id, source]) => normalizeSource(source, id, opts));
 }

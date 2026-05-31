@@ -70,9 +70,15 @@ export function createTelemetry(
 		},
 		finish() {
 			endedAt = Date.now();
+			const startedPerSource: Record<string, MuxSourceStats> = {};
+			for (const [id, stats] of Object.entries(perSource)) {
+				if (stats.started || stats.items > 0 || stats.completed || stats.errored !== undefined) {
+					startedPerSource[id] = stats;
+				}
+			}
 			const result: MuxResult = {
 				strategy,
-				perSource,
+				perSource: startedPerSource,
 				aborted,
 				startedAt,
 				endedAt,

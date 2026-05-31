@@ -1,6 +1,6 @@
 # Edge-case showcase
 
-**Status:** Contract matrix — implementation tracked in proposal P7 (`LSM-EDGE-*`).
+**Status:** Contract matrix — P6 cross-cutting pins in **`LSM-X-*`**; full behavioral matrix in P7 (`LSM-EDGE-*`).
 
 What breaks when you hand-roll stream orchestration, and how `llm-stream-mux` pins behavior. For positioning vs generic utilities, see [comparison](./comparison.md).
 
@@ -128,6 +128,23 @@ for await (const chunk of race([junkFirst, slowGood], {
 	console.log(chunk); // [42] from slowGood after junk buffered on winner
 }
 ```
+
+---
+
+## Cross-cutting options (P6 — `0.6.0`)
+
+Shared **`CommonOptions`** on **`race`**, **`fallback`**, and **`merge`/`ensemble`**.
+
+| Option                    | Scope                                                                                                    |
+| ------------------------- | -------------------------------------------------------------------------------------------------------- |
+| **`timeoutMs`**           | Per-source **time-to-first-usable** on **`race`** + **`fallback`** only; **`merge` ignores**             |
+| **`overallTimeoutMs`**    | Whole-operation deadline on all three async strategies → consumer **`ABORTED`** with **`TIMEOUT`** cause |
+| **`highWaterMark`**       | Output coordinator queue depth (default **`1`**)                                                         |
+| **`sourceHighWaterMark`** | Per-source input buffering on **`ReadableStream`** adapters only                                         |
+
+Timers start on **first consumer `.next()`**, not at strategy call site.
+
+**Tests:** `LSM-X-01`–`115`, `LSM-CORE-61`–`70`, `LSM-REL-08a/b`.
 
 ---
 

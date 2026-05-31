@@ -91,6 +91,27 @@ export function controllableReadable<T>() {
 	};
 }
 
+function wrapReadablePullCount<T>(
+	stream: ReadableStream<T>,
+	onPull: () => void,
+): ReadableStream<T> {
+	const reader = stream.getReader();
+	return new ReadableStream<T>({
+		async pull(controller) {
+			const result = await reader.read();
+			if (result.done) {
+				controller.close();
+				return;
+			}
+			onPull();
+			controller.enqueue(result.value);
+		},
+		cancel(reason) {
+			return reader.cancel(reason);
+		},
+	});
+}
+
 function wrapCountable<T>(
 	resolved: ReadableStream<T> | AsyncIterable<T>,
 	onPull: () => void,
@@ -144,9 +165,13 @@ export function countingSource<T>(inner: Source<T> | (() => Source<T>)) {
 
 	const wrapOne = (src: Source<T>): Source<T> => {
 		if (typeof src === "function") {
-			return () => wrapCountable(src(), bump);
+			return () => wrapOne(src());
 		}
-		return wrapCountable(src, bump);
+		const resolved = src as ReadableStream<T> | AsyncIterable<T>;
+		if (typeof (resolved as ReadableStream<T>).getReader === "function") {
+			return wrapReadablePullCount(resolved as ReadableStream<T>, bump);
+		}
+		return wrapCountable(resolved as AsyncIterable<T>, bump);
 	};
 
 	const source: Source<T> = typeof inner === "function" ? () => wrapOne(inner) : wrapOne(inner);

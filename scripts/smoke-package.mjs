@@ -53,6 +53,16 @@ const mergeTags = await collect(merge([
   (async function* () { yield 2; })(),
 ]));
 if (mergeTags.filter((t) => t.kind === "value").length !== 2) throw new Error("ESM merge");
+const raceTimeoutOut = await collect(race([
+  (async function* () { yield 1; })(),
+], { timeoutMs: 60000 }));
+if (raceTimeoutOut[0] !== 1) throw new Error("ESM race timeoutMs");
+const mergeTimeoutIter = merge([
+  (async function* () { yield 1; })(),
+], { overallTimeoutMs: 60000 })[Symbol.asyncIterator]();
+const mergeTimeoutStep = await mergeTimeoutIter.next();
+if (mergeTimeoutStep.done || mergeTimeoutStep.value.kind !== "value") throw new Error("ESM merge overallTimeoutMs");
+await mergeTimeoutIter.return();
 `,
 	);
 
@@ -87,6 +97,16 @@ const mergeTags = await collect(merge([
   (async function* () { yield 2; })(),
 ]));
 if (mergeTags.filter((t) => t.kind === "value").length !== 2) throw new Error("CJS merge");
+const raceTimeoutOut = await collect(race([
+  (async function* () { yield 1; })(),
+], { timeoutMs: 60000 }));
+if (raceTimeoutOut[0] !== 1) throw new Error("CJS race timeoutMs");
+const mergeTimeoutIter = merge([
+  (async function* () { yield 1; })(),
+], { overallTimeoutMs: 60000 })[Symbol.asyncIterator]();
+const mergeTimeoutStep = await mergeTimeoutIter.next();
+if (mergeTimeoutStep.done || mergeTimeoutStep.value.kind !== "value") throw new Error("CJS merge overallTimeoutMs");
+await mergeTimeoutIter.return();
 `,
 	);
 
