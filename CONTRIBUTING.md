@@ -6,20 +6,28 @@ Thank you for your interest in contributing.
 
 ## Canonical spec
 
-Read [`docs/proposal.MD`](./docs/proposal.MD) before making changes. Part A is normative; implement Part B phases **in order** (P0→P8).
+Read [`docs/proposal.MD`](./docs/proposal.MD) before making changes. Part A is normative; implement Part B phases **in order** (P0→P8; P9–P10 for release hardening).
 
 For ecosystem context (no npm coupling): [`docs/integration-cookbook.md`](./docs/integration-cookbook.md) and [`llm-stream-assemble`](https://github.com/01laky/llm-stream-assemble).
 
 ## Version ladder
 
-| Version     | Phase | Milestone                                                               |
-| ----------- | ----- | ----------------------------------------------------------------------- |
-| **`0.7.0`** | P7    | §23 edge-case matrix (`LSM-EDGE-*`)                                     |
-| **`0.8.0`** | P8    | Docs, examples, cookbook, `release:prep`                                |
-| **`0.9.0`** | P9    | §25 audit, Bun/Deno smoke, consumer smoke, STABILITY, SECURITY, RELEASE |
-| **`1.0.0`** | §25   | npm publish + explicit §9 / §6.3 API freeze                             |
+| Version     | Phase | Milestone                                                                  |
+| ----------- | ----- | -------------------------------------------------------------------------- |
+| **`0.7.0`** | P7    | §23 edge-case matrix (`LSM-EDGE-*`)                                        |
+| **`0.8.0`** | P8    | Docs, examples, cookbook, `release:prep`                                   |
+| **`0.9.0`** | P9    | §25 audit, Bun/Deno smoke, consumer smoke, STABILITY, SECURITY, RELEASE    |
+| **`1.0.0`** | P10   | npm publish + §9/§6.3 freeze; EDGE §H; REL-12a–12u; doc audit (**stable**) |
 
 Before tagging a release: **`pnpm verify:pre1`** green (or **`pnpm verify`** + **`pnpm release:prep`** minimum).
+
+### Maintainer publish flow (`1.0.0+`)
+
+1. **`pnpm verify:pre1`** and **`pnpm release:prep --full`**
+2. Tag **`v1.0.0`** (or patch), push, **`npm publish --provenance --access public`**
+3. GitHub Release from [`docs/RELEASE.md`](./docs/RELEASE.md) stable template + checklist
+4. Optional: tag **`v0.9.0`** as GitHub pre-release if ladder history incomplete — see RELEASE.md pre-release ceremony
+5. Post-publish: `npm install llm-stream-mux@<version>` smoke; rollback steps in RELEASE.md if publish fails
 
 ## Requirements
 

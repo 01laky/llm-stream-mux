@@ -18,6 +18,12 @@ const diagrams = [
 	"fallback-failover.mmd",
 	"edge-matrix.mmd",
 	"release-pipeline.mmd",
+	"api-frozen-surface.mmd",
+	"edge-matrix-h.mmd",
+	"publish-ceremony.mmd",
+	"interop-matrix.mmd",
+	"signal-timeout-flow.mmd",
+	"doc-audit-map.mmd",
 ];
 
 const errors = [];

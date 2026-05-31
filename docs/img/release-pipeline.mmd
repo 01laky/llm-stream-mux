@@ -4,7 +4,7 @@ flowchart TB
     P --> L[lint + typecheck]
     L --> B[build]
     B --> E[typecheck:examples]
-    E --> T[test — LSM-* 863]
+    E --> T[test — LSM-* 945]
     T --> SP[smoke:package]
     SP --> VD[verify:docs]
     VD --> DG[diagrams:check]
@@ -12,14 +12,21 @@ flowchart TB
   end
 
   subgraph pre1["pnpm verify:pre1 (maintainer)"]
-    V[verify] --> RP[release:prep]
+    V[verify — 945 tests] --> RP[release:prep]
     RP --> SR[smoke:runtimes --skip-optional]
     SR --> SC[smoke:consumer ESM+CJS]
+    SC --> SPUB[smoke:published]
+  end
+
+  subgraph publish["1.0.0 publish"]
+    TAG[git tag v1.0.0] --> NPM[npm publish --provenance]
+    NPM --> GH[GitHub Release stable]
   end
 
   subgraph full["release:prep --full"]
     SRC[smoke:runtimes --ci] --> SCC[smoke:consumer]
-    SCC --> BS[bench-smoke --warn]
+    SCC --> SPUB2[smoke-published --all-runtimes]
+    SPUB2 --> BS[bench-smoke --warn]
   end
 
   subgraph ci2["smoke-runtimes.yml"]

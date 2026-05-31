@@ -494,6 +494,10 @@ This dual placement is a key differentiator vs. a generic async-iterator utility
   Workers fixture, `SECURITY.md`, `docs/RELEASE.md`, `pnpm verify:pre1`, and **`docs/STABILITY.md`**
   (incl. npm provenance checklist). No new public API. **`1.0.0`** is tagged when the maintainer publishes
   to npm and declares §9/§6.3 frozen under semver.
+- **D15 — `1.0.0` = publish + freeze + §H max gate.** Beyond npm/tag/freeze, P10 adds
+  `LSM-EDGE-140`–`180`, `LSM-REL-12a`–`12u`, full doc cross-ref + anchor audit, expanded diagram
+  suite, post-publish tarball smoke (cross-runtime), npm pack audit, bench-smoke baseline gate, semver
+  policy pins, and publish rollback runbook. No new public API vs `0.9.0`.
 
 ## 14. Open questions
 
@@ -765,18 +769,18 @@ If a phase reveals the spec is wrong or underspecified, update this document (Pa
 Each phase maps to a `0.x` release so progress is visible and bisectable. `1.0.0` is tagged ONLY
 when §25 Definition of done is fully satisfied.
 
-| Version | Reached after | Functional capability at this version                                                                           |
-| ------- | ------------- | --------------------------------------------------------------------------------------------------------------- |
-| `0.1.0` | P0 + P1       | Scaffolding + core internals + interop helpers (`collect`, `toReadable`, `toAsyncIterable`). No strategies yet. |
-| `0.2.0` | P2            | `tee` works (N-way, all backpressure policies, independent cancel).                                             |
-| `0.3.0` | P3            | `race` works (first-usable, loser cancel, commit, `NO_USABLE_SOURCE`).                                          |
-| `0.4.0` | P4            | `fallback` works (lazy/eager, all `FailoverPolicy`, in-band failover, `ALL_FAILED`).                            |
-| `0.5.0` | P5            | `merge`/`ensemble` works (tagging, partial-failure, `order`, `concurrency`, backpressure).                      |
-| `0.6.0` | P6            | Cross-cutting complete (timeouts, `mapEach`, `SourceEvent`, `MuxResult`/`onFinish`, HWM). Full API per §9.      |
-| `0.7.0` | P7            | Edge-case matrix + contract tests all green; no-leak guarantees verified.                                       |
-| `0.8.0` | P8            | Docs, examples, cookbook, README; `release:prep` green; examples typecheck vs `dist/`.                          |
-| `0.9.0` | P9            | §25 audit; Bun/Deno + consumer smoke; STABILITY, SECURITY, RELEASE; REL-11a–11q; verify:pre1.                   |
-| `1.0.0` | §25 + publish | npm publish; §9/§6.3 API frozen under semver; Definition of done met (no new implementation).                   |
+| Version | Reached after | Functional capability at this version                                                                                               |
+| ------- | ------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `0.1.0` | P0 + P1       | Scaffolding + core internals + interop helpers (`collect`, `toReadable`, `toAsyncIterable`). No strategies yet.                     |
+| `0.2.0` | P2            | `tee` works (N-way, all backpressure policies, independent cancel).                                                                 |
+| `0.3.0` | P3            | `race` works (first-usable, loser cancel, commit, `NO_USABLE_SOURCE`).                                                              |
+| `0.4.0` | P4            | `fallback` works (lazy/eager, all `FailoverPolicy`, in-band failover, `ALL_FAILED`).                                                |
+| `0.5.0` | P5            | `merge`/`ensemble` works (tagging, partial-failure, `order`, `concurrency`, backpressure).                                          |
+| `0.6.0` | P6            | Cross-cutting complete (timeouts, `mapEach`, `SourceEvent`, `MuxResult`/`onFinish`, HWM). Full API per §9.                          |
+| `0.7.0` | P7            | Edge-case matrix + contract tests all green; no-leak guarantees verified.                                                           |
+| `0.8.0` | P8            | Docs, examples, cookbook, README; `release:prep` green; examples typecheck vs `dist/`.                                              |
+| `0.9.0` | P9            | §25 audit; Bun/Deno + consumer smoke; STABILITY, SECURITY, RELEASE; REL-11a–11q; verify:pre1.                                       |
+| `1.0.0` | P10           | npm publish; §9/§6.3 frozen; `LSM-EDGE-140`–`180`; REL-12a–12u; doc+diagram audit; post-publish smoke; pack audit; rollback runbook |
 
 ### 26.3 Definition of "functional 1.0.0"
 

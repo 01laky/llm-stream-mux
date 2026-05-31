@@ -1,6 +1,6 @@
 # Edge-case showcase
 
-**Status:** Contract matrix — P7 (`0.7.0`) + P8 (`0.8.0`) + P9 (`0.9.0`) — **`LSM-EDGE-01`–`139`** + **`06b`** + **`LSM-REL-09`/`10`/`11`** in `test/edge.test.ts` / `test/release.test.ts` (**883** tests total).
+**Status:** Stable **`1.0.0`** — contract matrix P7–P10 — **`LSM-EDGE-01`–`180`** + **`06b`** + **`LSM-REL-09`/`10`/`11`/`12`** in `test/edge.test.ts` / `test/release.test.ts` (**945** tests total).
 
 What breaks when you hand-roll stream orchestration, and how `llm-stream-mux` pins behavior. For positioning vs generic utilities, see [comparison](./comparison.md).
 
@@ -105,7 +105,7 @@ Diagram: [public-api-types.svg](./img/public-api-types.svg) · [core-internals.s
 
 **Authority:** `test/edge.test.ts` — canonical **`LSM-EDGE-*`** pins (strategy tests remain informative cross-refs).
 
-Diagram: [edge-matrix.svg](./img/edge-matrix.svg)
+Diagram: [edge-matrix.svg](./img/edge-matrix.svg) · [edge-matrix-h.svg](./img/edge-matrix-h.svg) (§H)
 
 ### G.1 Extended + no-leak + supplemental (P7)
 
@@ -152,13 +152,82 @@ Merge cross-refs: `LSM-MERGE-01`, `LSM-MERGE-02`, `LSM-MERGE-04`, `LSM-MERGE-09`
 
 ---
 
-## H) Prove it locally (after P1+)
+## H) Ultra-extended §H 1.0.0 production matrix (`LSM-EDGE-140`–`180`)
 
-Once helpers land in `test/helpers/streams.ts`:
+P10 pins interop round-trips, signal/timeout combinatorics, multi-source stress, telemetry parity, and matrix integrity guards. **`tee()`** accepts only `backpressure` / `bufferLimit` — no `signal`, `timeoutMs`, or `onFinish` on tee.
+
+Diagram: [edge-matrix-h.svg](./img/edge-matrix-h.svg) · [interop-matrix.svg](./img/interop-matrix.svg) · [signal-timeout-flow.svg](./img/signal-timeout-flow.svg)
+
+**Authority:** `test/edge.test.ts` — `describe("LSM-EDGE ultra-extended §H 1.0.0 production matrix")`.
+
+### H.1 Interop & consumer paths (`140`–`149`)
+
+| ID        | Scope                                                                        |
+| --------- | ---------------------------------------------------------------------------- |
+| **`140`** | fallback `toReadable` / `toAsyncIterable` round-trip equals direct `collect` |
+| **`141`** | merge round-trip tagged values preserved                                     |
+| **`142`** | tee branch `toAsyncIterable` round-trip equals `drainBranch` (n=2 block)     |
+| **`143`** | `collect` race via `toReadable` break cancels readable spy source            |
+| **`144`** | `collect` fallback mid-stream return aborts backup lazy                      |
+| **`145`** | race `highWaterMark` 2 yields buffered items before consumer reads           |
+| **`146`** | merge `highWaterMark` 2 slow consumer pauses all sources                     |
+| **`147`** | `toReadable` cancel calls underlying async iterator `return`                 |
+| **`148`** | merge `Tagged` stream through `toReadable` preserves kind discrimination     |
+| **`149`** | interop empty iterable — all strategies complete without hang                |
+
+### H.2 Signal, timeout & abort combinatorics (`150`–`159`)
+
+| ID        | Scope                                                                             |
+| --------- | --------------------------------------------------------------------------------- |
+| **`150`** | race external signal abort during `timeoutMs` disqualification                    |
+| **`151`** | fallback `overallTimeoutMs` — two lazy sources, backup never opened               |
+| **`152`** | merge `overallTimeoutMs` concurrency 3 mid-stream abort                           |
+| **`153`** | fallback `timeoutMs` — primary slow, backup lazy opens after primary disqualified |
+| **`154`** | race `timeoutMs` disarm on winner before overall fires                            |
+| **`155`** | fallback commit policy — signal abort after first usable, no failover             |
+| **`156`** | merge `failFast` false — signal abort after error tag                             |
+| **`157`** | race `AbortSignal.timeout` at call site, slow consumer                            |
+| **`158`** | sync throw strategies never call `onFinish`                                       |
+| **`159`** | merge `round-robin` `overallTimeoutMs` abort                                      |
+
+### H.3 Multi-source stress & no-leak (`160`–`169`)
+
+| ID        | Scope                                                              |
+| --------- | ------------------------------------------------------------------ |
+| **`160`** | race five lazy sources — break opens all five then cancels         |
+| **`161`** | fallback six-source chain — last good wins                         |
+| **`162`** | merge ten sources concurrency 4 — break slot audit                 |
+| **`163`** | tee n=5 block — parallel drain, all branches equal                 |
+| **`164`** | race Record five keys — fastest labeled winner in `onFinish`       |
+| **`165`** | merge five labeled sources — all `done` tags ids preserved         |
+| **`166`** | fallback five throws — `ALL_FAILED`, errors length five            |
+| **`167`** | race three junk + one good `isUsable` — flush order                |
+| **`168`** | merge `failFast` true two errors — second `next` same `ALL_FAILED` |
+| **`169`** | tee drop n=3 — one branch never reads, source completes, no hang   |
+
+### H.4 Telemetry, generics & parity (`170`–`180`)
+
+| ID        | Scope                                                                        |
+| --------- | ---------------------------------------------------------------------------- |
+| **`170`** | race/fallback/merge null/undefined/object pass-through matrix                |
+| **`171`** | race `onFinish` `MuxResult` strategy race, `aborted` false on clean complete |
+| **`172`** | fallback labeled Record `onFinish` winner matches activated source id        |
+| **`173`** | merge `ALL_FAILED` second `next` same error code                             |
+| **`174`** | merge `isError` and `isUsable` on same item — error tag not value            |
+| **`175`** | race ensemble array vs labeled Record same `onFinish` winner id              |
+| **`176`** | race `mapEach` returns same object reference identity preserved              |
+| **`177`** | race `timeoutMs` two slow, third fast wins before `overallTimeoutMs`         |
+| **`178`** | fallback ReadableStream empty primary, backup iterable wins `isUsable` gate  |
+| **`179`** | matrix doc integrity — `LSM-EDGE-140` through `178` in test titles           |
+| **`180`** | full-matrix integrity — `LSM-EDGE-01` through `179` (+ **`06b`** separate)   |
+
+---
+
+## I) Prove it locally
 
 ```ts
 import { race } from "llm-stream-mux";
-import { fromArray } from "../test/helpers/streams"; // P1
+import { fromArray } from "../test/helpers/streams"; // dev / examples only
 
 const { asyncIterable: junkFirst } = fromArray([new Uint8Array(0), new Uint8Array([1])], {
 	delayMs: 0,
@@ -193,6 +262,6 @@ Timers start on **first consumer `.next()`**, not at strategy call site.
 
 ## Related
 
-- [Proposal §7](./proposal.MD#7-error-cancellation--backpressure-semantics)
+- [Proposal §7](./proposal.MD#7-error-cancellation-backpressure-semantics)
 - [Usage guides](./usage-guides.md)
 - [Testing strategy](./testing-strategy.md)

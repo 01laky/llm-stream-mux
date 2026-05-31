@@ -2,11 +2,11 @@
 
 ## Supported versions
 
-| Version   | Supported   | Notes                                |
-| --------- | ----------- | ------------------------------------ |
-| `1.x`     | Yes         | After first npm publish (`1.0.0`)    |
-| `0.9.x`   | Best effort | Pre-stable RC — engineering complete |
-| `< 0.9.0` | No          | Upgrade to latest tag on `main`      |
+| Version   | Supported         | Notes                                     |
+| --------- | ----------------- | ----------------------------------------- |
+| **`1.x`** | **Yes (primary)** | Stable line after **`1.0.0`** npm publish |
+| `0.9.x`   | Best effort       | Pre-stable RC — upgrade to **`1.x`**      |
+| `< 0.9.0` | No                | Upgrade to latest tag on `main`           |
 
 ## Reporting a vulnerability
 
@@ -48,4 +48,4 @@ Before tagging a release:
 2. **`pnpm verify:pre1`** for maintainer checkpoints (`0.9.0+`)
 3. Review CHANGELOG for security-relevant behavior changes
 
-See [`docs/STABILITY.md`](./docs/STABILITY.md) for the 1.0.0 publish checklist.
+See [STABILITY.md](./docs/STABILITY.md) and [RELEASE.md](./docs/RELEASE.md) for publish and rollback procedures.

@@ -1,6 +1,6 @@
 # FAQ
 
-**Status:** P9 (`0.9.0`) — §25 audit, Bun/Deno smoke, `STABILITY.md`; **`1.0.0`** = npm publish + API freeze.
+**Status:** P10 (`1.0.0`) — stable release; §9 / §6.3 frozen under semver; **945** tests green.
 
 ---
 
@@ -40,23 +40,56 @@ No (D9). Async transforms belong in userland (`TransformStream`, manual loops). 
 
 ---
 
+## How do I install mux?
+
+```bash
+npm install llm-stream-mux
+# or pin: npm install llm-stream-mux@1.0.0
+```
+
+Requires Node.js **18+** (or Bun/Deno/Workers with Web Streams). See [compatibility](./compatibility.md).
+
+---
+
+## What changed at 1.0.0?
+
+- **First stable npm release** — public API frozen per [STABILITY.md](./STABILITY.md)
+- **`LSM-EDGE-140`–`180`** — §H production edge matrix + full-matrix integrity
+- **`LSM-REL-12a`–`12u`** — freeze gates (doc links, pack audit, bench baseline, rollback docs)
+- **945** tests (was 883 at `0.9.0`)
+- **Public API unchanged** vs `0.9.0` (export shape and behavior)
+
+---
+
 ## What is 0.9.0 vs 1.0.0?
 
-**`0.9.0`** (P9) — pre-stable RC: §25 Definition of done automated (`LSM-REL-11a`–`11q`), multi-runtime smoke, consumer smoke, [`STABILITY.md`](./STABILITY.md), [`SECURITY.md`](../SECURITY.md). **Public API unchanged vs 0.8.0**; not semver-frozen yet.
+**`0.9.0`** (P9) — pre-stable RC: §25 audit (`LSM-REL-11a`–`11q`), multi-runtime smoke, consumer smoke. API feature-complete but **not** semver-frozen.
 
-**`1.0.0`** — first npm publish + maintainer declares §9 / §6.3 frozen under semver. See [`STABILITY.md`](./STABILITY.md) and [`RELEASE.md`](./RELEASE.md).
+**`1.0.0`** (P10) — stable: npm publish, §9 / §6.3 frozen, §H edge max, doc audit. See [STABILITY.md](./STABILITY.md) and [RELEASE.md](./RELEASE.md).
+
+---
+
+## What is semver after 1.0.0?
+
+Per [STABILITY.md](./STABILITY.md):
+
+- **Major** — breaking §9 exports or §6.3 `MuxErrorCode` set
+- **Minor** — backward-compatible addition (proposal amendment required for new exports)
+- **Patch** — bug fix, docs, tests; no export shape change
+
+Patch releases do **not** promise breaking changes.
 
 ---
 
 ## What is `pnpm verify:pre1`?
 
-Maintainer gate before tagging: runs **`pnpm verify`**, then **`release:prep`**, **`smoke:runtimes --skip-optional`**, and **`smoke:consumer`**. Does not require Bun/Deno locally. CI still runs **`smoke:runtimes --ci`** separately.
+Maintainer gate before tagging: runs **`pnpm verify`**, **`release:prep`**, **`smoke:runtimes --skip-optional`**, **`smoke:consumer`**, and **`smoke:published`**. CI still runs **`smoke:runtimes --ci`** separately.
 
 ---
 
-## When is 1.0.0?
+## Signal and timeout options?
 
-When §25 is audited, CI is green, and the maintainer publishes to npm and updates STABILITY to “frozen”. **`0.9.0`** completes engineering prep; **`1.0.0`** is ceremony only. See proposal **D13**, **D14**, and §26.2.
+`race`, `fallback`, and `merge` share `timeoutMs`, `overallTimeoutMs`, and `signal`. **`tee()`** has no `signal` or timeout options — only `backpressure` / `bufferLimit`. See [signal-timeout-flow diagram](./img/signal-timeout-flow.svg) and [edge-cases §H](./edge-cases.md#h-ultra-extended-h-100-production-matrix-lsm-edge-140180).
 
 ---
 

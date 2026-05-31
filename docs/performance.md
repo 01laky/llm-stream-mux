@@ -1,6 +1,6 @@
 # Performance & runtime behavior
 
-**Status:** P9 (`0.9.0`) — design constraints from proposal §7.7 and §8; advisory bench in `scripts/bench-smoke.mjs`.
+**Status:** Stable **`1.0.0`** — design constraints from proposal §7.7 and §8; advisory bench in `scripts/bench-smoke.mjs` gated by **`LSM-REL-12u`**.
 
 ---
 
@@ -35,7 +35,7 @@ Hard cancel (`ReadableStream`) aborts HTTP. Soft cancel (`AsyncIterable`) may le
 
 ## Benchmarks
 
-**`scripts/bench-smoke.mjs`** — advisory micro bench for `race` / `merge` median latency. Not a CI gate.
+**`scripts/bench-smoke.mjs`** — advisory micro bench for `race` / `merge` median latency. **`LSM-REL-12u`** enforces `--warn` at **`1.0.0`**.
 
 ```bash
 pnpm build
@@ -44,6 +44,8 @@ node scripts/bench-smoke.mjs --warn   # warn on regression vs baseline
 ```
 
 Baseline: **`scripts/bench-smoke-baseline.json`**. Invoked with **`--warn`** from **`pnpm release:prep --full`**.
+
+**Baseline refresh policy:** update `bench-smoke-baseline.json` only on intentional performance change in `src/` — document the reason in **`CHANGELOG.md`**. Do not silently widen `regressionWarnRatio` (default **1.2**).
 
 ---
 

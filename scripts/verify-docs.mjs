@@ -1,4 +1,5 @@
 import { existsSync } from "node:fs";
+import { execFileSync } from "node:child_process";
 import { join } from "node:path";
 
 const root = process.cwd();
@@ -35,6 +36,9 @@ const required = [
 	"scripts/verify-zero-deps.mjs",
 	"scripts/smoke-package.mjs",
 	"scripts/smoke-consumer.mjs",
+	"scripts/smoke-published.mjs",
+	"scripts/verify-doc-links.mjs",
+	"scripts/verify-pack.mjs",
 	"scripts/bench-smoke.mjs",
 	"scripts/bench-smoke-baseline.json",
 	"scripts/check-portability.mjs",
@@ -42,6 +46,12 @@ const required = [
 	"scripts/smoke-runtimes.mjs",
 	".github/workflows/ci.yml",
 	".github/workflows/smoke-runtimes.yml",
+	"docs/img/api-frozen-surface.mmd",
+	"docs/img/edge-matrix-h.mmd",
+	"docs/img/publish-ceremony.mmd",
+	"docs/img/interop-matrix.mmd",
+	"docs/img/signal-timeout-flow.mmd",
+	"docs/img/doc-audit-map.mmd",
 ];
 
 const missing = required.filter((rel) => !existsSync(join(root, rel)));
@@ -53,3 +63,4 @@ if (missing.length > 0) {
 }
 
 console.log(`OK: ${required.length} required docs / scripts present`);
+execFileSync("node", ["scripts/verify-doc-links.mjs"], { stdio: "inherit" });

@@ -1,0 +1,11 @@
+flowchart TB
+  SIG[AbortSignal] --> RA[race]
+  SIG --> FB[fallback]
+  SIG --> MG[merge]
+  TM[timeoutMs] --> RA
+  TM --> FB
+  OT[overallTimeoutMs] --> RA
+  OT --> FB
+  OT --> MG
+  TE[tee — no signal/timeout]:::tee
+  classDef tee fill:#eee

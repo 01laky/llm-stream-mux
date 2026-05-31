@@ -1,10 +1,12 @@
 # API stability policy
 
-> **Public API is not semver-frozen until `1.0.0`.** This document lists the **intended** stable surface and the maintainer checklist for the first npm release.
+> **Public API frozen as of `1.0.0`.** §9 runtime exports and §6.3 `MuxErrorCode` set are stable under semver (see policy below).
 
-Behavioral contracts are pinned by **`LSM-*`** tests — especially [`edge-cases.md` §G](./edge-cases.md#g-contract-matrix-binding--p7-070) (`LSM-EDGE-01`–`139`).
+Behavioral contracts are pinned by **`LSM-*`** tests — especially [`edge-cases.md` §G](./edge-cases.md#g-contract-matrix-binding-p7-070) (`LSM-EDGE-01`–`139`) and [`§H`](./edge-cases.md#h-ultra-extended-h-100-production-matrix-lsm-edge-140180) (`LSM-EDGE-140`–`180`).
 
 Report security issues per [`SECURITY.md`](../SECURITY.md).
+
+![Frozen public API surface](./img/api-frozen-surface.svg)
 
 ---
 
@@ -50,15 +52,13 @@ These **value** exports must remain available from the package root:
 
 ---
 
-## Semver policy (after 1.0.0)
+## Semver policy (active from 1.0.0)
 
-| Bump      | When                                                                               |
-| --------- | ---------------------------------------------------------------------------------- |
-| **PATCH** | Bug fixes, docs, internal changes — no export shape change                         |
-| **MINOR** | Additive options with defaults; new `SourceEvent` types only if telemetry-safe     |
-| **MAJOR** | Remove/rename exports, change default strategy behavior, change `MuxErrorCode` set |
+- **Major** — breaking change to §9 runtime exports or §6.3 `MuxErrorCode` set
+- **Minor** — backward-compatible addition (new optional export or strategy opt-in only with explicit proposal amendment)
+- **Patch** — bug fix, docs, tests; no export shape change
 
-Pre-1.0 (`0.x`): breaking changes allowed but should be noted in CHANGELOG.
+Patch releases do **not** introduce breaking API changes.
 
 ---
 
@@ -77,32 +77,51 @@ No HTTP client, no provider parsing, no security filter, no baked-in LLM event m
 | Deno               | Smoke-tested — same workflow                                                            |
 | Cloudflare Workers | **Expected** — fixture [`examples/workers-smoke/`](../examples/workers-smoke/README.md) |
 
-![Release verify pipeline](./img/release-pipeline.svg)
+![Release verify pipeline](./img/release-pipeline.svg) · [Publish ceremony](./img/publish-ceremony.svg)
 
 ---
 
-## Maintainer checklist (1.0.0 — not executed at 0.9.0)
+## Maintainer publish flow (1.0.0+)
 
-1. Confirm **`0.9.0`** on `main`; CI green (`ci.yml` + `smoke-runtimes.yml`)
-2. **`pnpm verify:pre1`** (verify + release:prep + smoke:runtimes + smoke:consumer)
+1. Confirm **`1.0.0`** on `main`; CI green (`ci.yml` + `smoke-runtimes.yml`)
+2. **`pnpm verify:pre1`** (verify + release:prep + smoke:runtimes + smoke:consumer + smoke:published)
 3. **`pnpm smoke:runtimes --ci`**
-4. **`pnpm release:prep --full`** (optional bench-smoke advisory)
-5. Bump **`1.0.0`**, `MUX_PKG_VERSION`, CHANGELOG, REL version pins
-6. Update **this file** banner to “frozen as of 1.0.0”
-7. `git tag v1.0.0 && git push origin v1.0.0`
-8. GitHub Release from [`docs/RELEASE.md`](./RELEASE.md) stable template
-9. **`npm publish --provenance --access public`**
-10. Post-publish: `npm install llm-stream-mux@1.0.0` smoke in a clean directory
+4. **`pnpm release:prep --full`** (bench-smoke advisory, smoke-published cross-runtime)
+5. `git tag v1.0.0 && git push origin v1.0.0`
+6. GitHub Release from [`docs/RELEASE.md`](./RELEASE.md) stable template + checklist
+7. **`npm publish --provenance --access public`**
+8. Post-publish: `npm install llm-stream-mux@1.0.0` smoke in a clean directory
 
-### npm provenance + trusted publishing (1.0.0)
+### npm provenance + trusted publishing
 
-Before first publish:
+Before publish:
 
 1. Enable **npm trusted publishers** (GitHub OIDC) for this repository
 2. Maintainer npm account **2FA** enabled
 3. Use `npm publish --provenance --access public`
 4. Confirm provenance badge on npm package page
-5. Optional later: `.github/workflows/publish.yml` on tag — not required at `0.9.0`
+5. Optional: `.github/workflows/publish.yml` on tag — document secrets in [`RELEASE.md`](./RELEASE.md)
+
+---
+
+## Historical: 0.9.0 → 1.0.0 migration
+
+Prior to **`1.0.0`**, the banner read:
+
+> **Public API is not semver-frozen until `1.0.0`.** This document lists the **intended** stable surface and the maintainer checklist for the first npm release.
+
+Pre-1.0 (`0.x`): breaking changes were allowed but noted in CHANGELOG. **`0.9.0`** completed §25 audit automation (`LSM-REL-11a`–`11q`) without changing the public export shape vs **`0.8.0`**.
+
+### Archived pre-1.0 maintainer checklist (completed at 1.0.0)
+
+- [x] Confirm **`0.9.0`** on `main`; CI green
+- [x] **`pnpm verify:pre1`** green
+- [x] Bump **`1.0.0`**, `MUX_PKG_VERSION`, CHANGELOG, REL version pins
+- [x] Update banner to “frozen as of 1.0.0”
+- [x] Add **`LSM-EDGE-140`–`180`** §H + **`LSM-REL-12a`–`12u`**
+- [x] Doc audit + **19** diagrams + `verify-doc-links`
+- [ ] `npm publish --provenance --access public` (maintainer, after green gates)
+- [ ] GitHub Release **`v1.0.0`** (maintainer)
 
 ---
 

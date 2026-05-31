@@ -140,14 +140,36 @@ try {
 	rmSync(temp, { recursive: true, force: true });
 }
 
-if (!existsSync(join(rootDir, "docs/STABILITY.md"))) {
-	errors.push("Missing docs/STABILITY.md");
-} else {
+try {
+	run("node", ["scripts/verify-doc-links.mjs"]);
+} catch {
+	errors.push("verify-doc-links failed");
+}
+
+if (existsSync(join(rootDir, "docs/STABILITY.md"))) {
 	const stability = read("docs/STABILITY.md");
-	if (!stability.includes("1.0.0")) {
-		errors.push("docs/STABILITY.md should reference 1.0.0 freeze/handoff");
+	const active = stability.split(/^## Historical:/m)[0] ?? stability;
+	if (!active.includes("frozen as of `1.0.0`")) {
+		errors.push('docs/STABILITY.md active banner must say "frozen as of `1.0.0`"');
 	} else {
-		ok("docs/STABILITY.md present");
+		ok("STABILITY frozen banner");
+	}
+} else {
+	errors.push("Missing docs/STABILITY.md");
+}
+
+if (existsSync(join(rootDir, "CHANGELOG.md"))) {
+	const changelog = read("CHANGELOG.md");
+	const section = changelog.split("## [1.0.0]")[1]?.split(/^## \[/m)[0] ?? "";
+	if (version === "1.0.0" && !/frozen/i.test(section)) {
+		errors.push("CHANGELOG [1.0.0] should declare API freeze");
+	}
+}
+
+if (existsSync(join(rootDir, "docs/RELEASE.md"))) {
+	const release = read("docs/RELEASE.md");
+	if (version === "1.0.0" && !/Publish failure|rollback/i.test(release)) {
+		errors.push("docs/RELEASE.md missing rollback runbook");
 	}
 }
 
@@ -213,6 +235,12 @@ if (full) {
 		ok("smoke-consumer passed");
 	} catch {
 		errors.push("smoke-consumer failed");
+	}
+	try {
+		run("node", ["scripts/smoke-published.mjs", "--all-runtimes"], { stdio: "pipe" });
+		ok("smoke-published --all-runtimes passed");
+	} catch {
+		errors.push("smoke-published failed");
 	}
 	try {
 		run("node", ["scripts/bench-smoke.mjs", "--warn"], { stdio: "inherit" });

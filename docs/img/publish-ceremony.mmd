@@ -1,0 +1,5 @@
+flowchart LR
+  V[pnpm verify:pre1] --> T[git tag v1.0.0]
+  T --> N[npm publish --provenance]
+  N --> G[GitHub Release stable]
+  G --> S[smoke: npm install @1.0.0]

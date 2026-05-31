@@ -1,9 +1,9 @@
 # llm-stream-mux
 
-![version](https://img.shields.io/badge/version-0.9.0-lightgrey)
+![version](https://img.shields.io/badge/version-1.0.0-blue)
 ![node](https://img.shields.io/badge/node-%3E%3D18-339933)
 ![runtime deps](https://img.shields.io/badge/runtime_deps-0-brightgreen)
-![status](https://img.shields.io/badge/status-pre__stable-yellow)
+![status](https://img.shields.io/badge/status-stable-brightgreen)
 [![ci](https://github.com/01laky/llm-stream-mux/actions/workflows/ci.yml/badge.svg)](https://github.com/01laky/llm-stream-mux/actions/workflows/ci.yml)
 
 **Race, fallback, merge, and tee over any stream** — generic over `T`, zero runtime dependencies, Web Streams throughout.
@@ -12,7 +12,7 @@
 
 Orchestrate streams — **not another hand-rolled `Promise.race` on fetch**.
 
-**Status:** `0.9.0` — P0–P9: feature-complete per §9, **§25 audit** green, Bun/Deno smoke in CI. **Not on npm until `1.0.0`.** Spec: [`docs/proposal.MD`](./docs/proposal.MD) · stability: [`docs/STABILITY.md`](./docs/STABILITY.md) · security: [`SECURITY.md`](./SECURITY.md)
+**Status:** `1.0.0` — stable; **§9 runtime exports and §6.3 `MuxErrorCode` frozen** under semver. **945** tests via `pnpm verify`. Spec: [`docs/proposal.MD`](./docs/proposal.MD) · stability: [`docs/STABILITY.md`](./docs/STABILITY.md) · security: [`SECURITY.md`](./SECURITY.md)
 
 ---
 
@@ -88,17 +88,12 @@ Walkthrough: [docs/edge-cases.md](./docs/edge-cases.md).
 
 ## Install
 
-**npm registry:** after **`1.0.0`** — `pnpm add llm-stream-mux`
-
-**Until then:**
-
 ```bash
-git clone https://github.com/01laky/llm-stream-mux.git
-cd llm-stream-mux && pnpm install && pnpm build
-# or: npm pack && npm install ./llm-stream-mux-0.9.0.tgz
+npm install llm-stream-mux
+# or: pnpm add llm-stream-mux
 ```
 
-Pre-stable RC **`0.9.0`** — API feature-complete per §9; semver freeze at **`1.0.0`** ([STABILITY](./docs/STABILITY.md)).
+Pin: `npm install llm-stream-mux@1.0.0`. Public API frozen at **`1.0.0`** ([STABILITY](./docs/STABILITY.md)).
 
 **Requirements:** Node.js 18+ · see [compatibility matrix](./docs/compatibility.md).
 
@@ -142,8 +137,11 @@ Strategy picker: [docs/usage-guides.md](./docs/usage-guides.md) · [quick-decisi
 
 ![End-to-end pipeline](https://raw.githubusercontent.com/01laky/llm-stream-mux/main/docs/img/pipeline.svg)
 
-- Diagram index: [docs/img/README.md](./docs/img/README.md)
+- Diagram index: [docs/img/README.md](./docs/img/README.md) (**19** diagrams)
+- Frozen API surface: [api-frozen-surface.svg](./docs/img/api-frozen-surface.svg)
 - Public API types (P0): [public-api-types.svg](./docs/img/public-api-types.svg)
+- Edge matrix §H: [edge-matrix-h.svg](./docs/img/edge-matrix-h.svg)
+- Interop paths: [interop-matrix.svg](./docs/img/interop-matrix.svg)
 - Ecosystem stack: [ecosystem.svg](./docs/img/ecosystem.svg)
 - Byte vs event placement: [byte-event-modes.svg](./docs/img/byte-event-modes.svg)
 - Merge `Tagged<T>` flow: [merge-tagged.svg](./docs/img/merge-tagged.svg)
@@ -168,8 +166,8 @@ Full API: [proposal §9](./docs/proposal.MD#9-public-api-final-shape).
 
 ## Documentation
 
-- [Proposal & roadmap](./docs/proposal.MD) — normative spec + P0–P9
-- [API stability (pre-1.0)](./docs/STABILITY.md)
+- [Proposal & roadmap](./docs/proposal.MD) — normative spec + P0–P10
+- [API stability (frozen at 1.0.0)](./docs/STABILITY.md)
 - [Security policy](./SECURITY.md)
 - [Release templates](./docs/RELEASE.md)
 - [Usage guides](./docs/usage-guides.md) — per-strategy recipes
@@ -219,7 +217,8 @@ CI runs `pnpm verify` on Node **18, 20, and 22**; [`smoke-runtimes.yml`](./.gith
 | `pnpm smoke:package`      | ESM/CJS import from `npm pack` tarball                                                                                                                       |
 | `pnpm smoke:runtimes`     | Node (+ optional Bun/Deno) tarball smoke — `--skip-optional` locally, `--ci` in Actions                                                                      |
 | `pnpm smoke:consumer`     | ESM + CJS downstream consumer smoke from tarball                                                                                                             |
-| `pnpm verify:pre1`        | maintainer gate: verify + release:prep + smoke:runtimes + smoke:consumer                                                                                     |
+| `pnpm smoke:published`    | post-pack publish simulation (`--node18` / `--node20` / `--all-runtimes`)                                                                                    |
+| `pnpm verify:pre1`        | maintainer gate: verify + release:prep + smoke:runtimes + smoke:consumer + smoke:published                                                                   |
 | `pnpm verify:deps`        | fail if runtime dependencies added                                                                                                                           |
 | `pnpm diagrams:build`     | render `docs/img/*.mmd` → `.svg`                                                                                                                             |
 | `pnpm diagrams:check`     | SVGs present and newer than `.mmd`                                                                                                                           |

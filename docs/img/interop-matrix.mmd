@@ -1,0 +1,16 @@
+flowchart TB
+  subgraph helpers["interop helpers"]
+    COL[collect]
+    TR[toReadable]
+    TA[toAsyncIterable]
+  end
+  subgraph strategies["strategies"]
+    RA[race]
+    FB[fallback]
+    MG[merge]
+    TE[tee]
+  end
+  RA --> helpers
+  FB --> helpers
+  MG --> helpers
+  TE --> helpers

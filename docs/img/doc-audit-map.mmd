@@ -1,0 +1,21 @@
+flowchart LR
+  subgraph docs["docs/"]
+    ST[STABILITY]
+    REL[RELEASE]
+    EC[edge-cases]
+    TS[testing-strategy]
+  end
+  subgraph gates["verify gates"]
+    VD[verify-docs]
+    VL[verify-doc-links]
+    RP[release-prep]
+  end
+  subgraph tests["LSM-*"]
+    EDGE[EDGE 01–180]
+    RELT[REL 12a–12u]
+  end
+  docs --> VD
+  docs --> VL
+  VD --> RP
+  EDGE --> EC
+  RELT --> TS

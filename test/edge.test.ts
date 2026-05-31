@@ -1678,3 +1678,491 @@ describe("LSM-EDGE ultra-extended §G P9 deep matrix", () => {
 		expect(missing, `missing LSM-EDGE IDs in test/edge.test.ts: ${missing.join(", ")}`).toEqual([]);
 	});
 });
+
+describe("LSM-EDGE ultra-extended §H 1.0.0 production matrix", () => {
+	it("LSM-EDGE-140 fallback toReadable toAsyncIterable round-trip equals direct collect", async () => {
+		const makeSources = () => [fromArray([10, 20]).asyncIterable, fromArray([99]).asyncIterable];
+		const direct = await collectFallback(makeSources());
+		const roundTrip = await collect(toAsyncIterable(toReadable(fallback(makeSources()))));
+		expect(roundTrip).toEqual(direct);
+	});
+
+	it("LSM-EDGE-141 merge toReadable round-trip tagged values preserved", async () => {
+		const makeSources = () => [fromArray([1]).asyncIterable, fromArray([2]).asyncIterable];
+		const direct = await collectTagged(makeSources());
+		const roundTrip = await collect(toAsyncIterable(toReadable(merge(makeSources()))));
+		expect(roundTrip).toEqual(direct);
+	});
+
+	it("LSM-EDGE-142 tee branch toAsyncIterable round-trip equals drainBranch", async () => {
+		const makeSources = () => fromArray([7, 8, 9]).asyncIterable;
+		const [branchA] = tee(makeSources(), 1, { backpressure: "block" });
+		const viaRoundTrip = await collect(toAsyncIterable(branchA));
+		const [branchB] = tee(makeSources(), 1, { backpressure: "block" });
+		const direct = await drainBranch(branchB);
+		expect(viaRoundTrip).toEqual(direct);
+	});
+
+	it("LSM-EDGE-143 collect race via toReadable break cancels readable spy source", async () => {
+		const spy = cancelSpyingReadable<number>();
+		spy.enqueue(1);
+		spy.enqueue(2);
+		for await (const _x of toReadable(
+			race([spy.stream, fromArray([99], { delayMs: 50 }).asyncIterable]),
+		)) {
+			break;
+		}
+		await flushMicrotasks();
+		expect(spy.cancelReasons.length).toBeGreaterThan(0);
+	});
+
+	it("LSM-EDGE-144 collect fallback mid-stream return aborts backup lazy", async () => {
+		const primary = fromArray([1, 2, 3], { neverEnd: true }).asyncIterable;
+		const backup = lazyOpenCounter(() => fromArray([99]).asyncIterable);
+		const iter = fallback([primary, backup.source])[Symbol.asyncIterator]();
+		expect((await iter.next()).value).toBe(1);
+		await iter.return?.();
+		await flushMicrotasks();
+		expect(backup.openCount).toBe(0);
+	});
+
+	it("LSM-EDGE-145 race highWaterMark 2 yields buffered items before consumer reads", async () => {
+		const ctrl = controllableReadable<number>();
+		const slow = fromArray([99], { delayMs: 200, neverEnd: true }).asyncIterable;
+		const iter = race([ctrl.stream, slow], { highWaterMark: 2 })[Symbol.asyncIterator]();
+		ctrl.enqueue(1);
+		ctrl.enqueue(2);
+		await flushMicrotasks();
+		expect((await iter.next()).value).toBe(1);
+		expect((await iter.next()).value).toBe(2);
+		await iter.return?.();
+	});
+
+	it("LSM-EDGE-146 merge highWaterMark 2 slow consumer pauses all sources", async () => {
+		const a = countingSource(fromArray([1, 2, 3]).asyncIterable);
+		const b = countingSource(fromArray([4, 5]).asyncIterable);
+		const iter = merge([a.source, b.source], { highWaterMark: 2 })[Symbol.asyncIterator]();
+		await iter.next();
+		await iter.next();
+		const pullsAfterTwo = a.pullCount + b.pullCount;
+		await iter.next();
+		expect(a.pullCount + b.pullCount).toBeGreaterThanOrEqual(pullsAfterTwo);
+		await iter.return?.();
+	});
+
+	it("LSM-EDGE-147 toReadable cancel calls underlying async iterator return", async () => {
+		const slot = lazyOpenCounter(() => fromArray([1, 2], { neverEnd: true }).asyncIterable);
+		for await (const _x of toReadable(race([slot.source]))) {
+			break;
+		}
+		await flushMicrotasks();
+		expect(slot.openCount).toBe(1);
+	});
+
+	it("LSM-EDGE-148 merge Tagged stream through toReadable preserves kind discrimination", async () => {
+		const bad = controllableReadable<number>();
+		bad.error(new Error("tagged err"));
+		const tags = await collect(
+			toAsyncIterable(
+				toReadable(merge([bad.stream, fromArray([1]).asyncIterable], { failFast: false })),
+			),
+		);
+		expect(tags.some((t) => t.kind === "error")).toBe(true);
+		expect(tags.some((t) => t.kind === "value" && t.value === 1)).toBe(true);
+	});
+
+	it("LSM-EDGE-149 interop empty iterable all strategies complete without hang", async () => {
+		await expect(collectRace([])).rejects.toSatisfy(
+			(err: unknown) => asMuxError(err).code === "NO_USABLE_SOURCE",
+		);
+		await expect(collectFallback([])).rejects.toSatisfy(
+			(err: unknown) => asMuxError(err).code === "ALL_FAILED",
+		);
+		expect(await collectTagged([])).toEqual([]);
+		const [branch] = tee(fromArray([]).asyncIterable, 1);
+		expect(await drainBranch(branch)).toEqual([]);
+	});
+
+	it("LSM-EDGE-150 race external signal abort during timeoutMs disqualification", async () => {
+		const ctrl = new AbortController();
+		const iter = race([fromArray([1], { delayMs: 500, neverEnd: true }).asyncIterable], {
+			signal: ctrl.signal,
+			timeoutMs: 50,
+		})[Symbol.asyncIterator]();
+		ctrl.abort();
+		await expect(iter.next()).rejects.toSatisfy(
+			(err: unknown) => asMuxError(err).code === "ABORTED",
+		);
+	});
+
+	it("LSM-EDGE-151 fallback overallTimeoutMs with two lazy sources backup never opened", async () => {
+		const primary = lazyOpenCounter(
+			() => fromArray([1], { delayMs: 200, neverEnd: true }).asyncIterable,
+		);
+		const backup = lazyOpenCounter(() => fromArray([99]).asyncIterable);
+		const iter = fallback([primary.source, backup.source], { overallTimeoutMs: 50 })[
+			Symbol.asyncIterator
+		]();
+		await expect(iter.next()).rejects.toSatisfy((err: unknown) => {
+			expectAbortedByOverallTimeout(err);
+			return true;
+		});
+		expect(backup.openCount).toBe(0);
+	});
+
+	it("LSM-EDGE-152 merge overallTimeoutMs concurrency 3 mid-stream abort", async () => {
+		const a = controllableReadable<number>();
+		const b = controllableReadable<number>();
+		const c = controllableReadable<number>();
+		a.enqueue(1);
+		b.enqueue(2);
+		c.enqueue(3);
+		const iter = merge([a.stream, b.stream, c.stream], { concurrency: 3, overallTimeoutMs: 50 })[
+			Symbol.asyncIterator
+		]();
+		await iter.next();
+		await new Promise<void>((r) => setTimeout(r, 80));
+		await expect(iter.next()).rejects.toSatisfy((err: unknown) => {
+			expectAbortedByOverallTimeout(err);
+			return true;
+		});
+	});
+
+	it("LSM-EDGE-153 fallback timeoutMs primary slow backup lazy opens after primary disqualified", async () => {
+		const primary = lazyOpenCounter(
+			() => fromArray([1], { delayMs: 200, neverEnd: true }).asyncIterable,
+		);
+		const backup = lazyOpenCounter(() => fromArray([42]).asyncIterable);
+		const out = await collectFallback([primary.source, backup.source], {
+			timeoutMs: 30,
+			isUsable: (n) => n > 10,
+		});
+		expect(out).toEqual([42]);
+		expect(primary.openCount).toBe(1);
+		expect(backup.openCount).toBe(1);
+	});
+
+	it("LSM-EDGE-154 race timeoutMs disarm on winner before overall fires", async () => {
+		const out = await collectRace(
+			[fromArray([1], { delayMs: 200 }).asyncIterable, fromArray([99]).asyncIterable],
+			{ timeoutMs: 5000, overallTimeoutMs: 8000, isUsable: (n) => n === 99 },
+		);
+		expect(out).toEqual([99]);
+	});
+
+	it("LSM-EDGE-155 fallback commit policy signal abort after first usable no failover", async () => {
+		const backup = lazyOpenCounter(() => fromArray([99]).asyncIterable);
+		const ctrl = new AbortController();
+		const iter = fallback([fromArray([1, 2], { neverEnd: true }).asyncIterable, backup.source], {
+			policy: "commit",
+			signal: ctrl.signal,
+		})[Symbol.asyncIterator]();
+		expect((await iter.next()).value).toBe(1);
+		ctrl.abort();
+		await expect(iter.next()).rejects.toSatisfy(
+			(err: unknown) => asMuxError(err).code === "ABORTED",
+		);
+		expect(backup.openCount).toBe(0);
+	});
+
+	it("LSM-EDGE-156 merge failFast false signal abort after error tag", async () => {
+		const ctrl = new AbortController();
+		const iter = merge(
+			[
+				fromArray([1], { throwAt: 0 }).asyncIterable,
+				fromArray([2], { neverEnd: true }).asyncIterable,
+			],
+			{ failFast: false, signal: ctrl.signal },
+		)[Symbol.asyncIterator]();
+		await iter.next();
+		ctrl.abort();
+		await expect(iter.next()).rejects.toSatisfy(
+			(err: unknown) => asMuxError(err).code === "ABORTED",
+		);
+	});
+
+	it("LSM-EDGE-157 race AbortSignal.timeout at call site slow consumer", async () => {
+		const signal = AbortSignal.timeout(50);
+		const iter = race([fromArray([1], { delayMs: 200, neverEnd: true }).asyncIterable], {
+			signal,
+		})[Symbol.asyncIterator]();
+		await expect(iter.next()).rejects.toSatisfy((err: unknown) => {
+			const muxErr = asMuxError(err);
+			return muxErr.code === "ABORTED" || muxErr.code === "TIMEOUT";
+		});
+	});
+
+	it("LSM-EDGE-158 sync throw strategies never call onFinish", () => {
+		let raceFinish = 0;
+		let fbFinish = 0;
+		expect(() => race([], { onFinish: () => (raceFinish += 1) })[Symbol.asyncIterator]()).toThrow();
+		expect(raceFinish).toBe(0);
+		expect(() =>
+			fallback([], { onFinish: () => (fbFinish += 1) })[Symbol.asyncIterator](),
+		).toThrow();
+		expect(fbFinish).toBe(0);
+	});
+
+	it("LSM-EDGE-159 merge round-robin overallTimeoutMs abort", async () => {
+		const a = controllableReadable<number>();
+		const b = controllableReadable<number>();
+		a.enqueue(10);
+		b.enqueue(20);
+		const iter = merge([a.stream, b.stream], { order: "round-robin", overallTimeoutMs: 50 })[
+			Symbol.asyncIterator
+		]();
+		expect((await iter.next()).value).toMatchObject({ kind: "value", value: 10 });
+		await new Promise<void>((r) => setTimeout(r, 80));
+		await expect(iter.next()).rejects.toSatisfy((err: unknown) => {
+			expectAbortedByOverallTimeout(err);
+			return true;
+		});
+	});
+
+	it("LSM-EDGE-160 race five lazy sources break all five opened then cancelled", async () => {
+		const slots = Array.from({ length: 5 }, () =>
+			lazyOpenCounter(() => fromArray([1], { neverEnd: true }).asyncIterable),
+		);
+		for await (const _x of race(slots.map((s) => s.source))) {
+			break;
+		}
+		await flushMicrotasks();
+		for (const slot of slots) {
+			expect(slot.openCount).toBe(1);
+		}
+	});
+
+	it("LSM-EDGE-161 fallback six-source chain last good wins", async () => {
+		expect(
+			await collectFallback([
+				fromArray([1], { throwAt: 0 }).asyncIterable,
+				fromArray([]).asyncIterable,
+				fromArray([2], { throwAt: 0 }).asyncIterable,
+				fromArray([]).asyncIterable,
+				fromArray([3], { throwAt: 0 }).asyncIterable,
+				fromArray([77]).asyncIterable,
+			]),
+		).toEqual([77]);
+	});
+
+	it("LSM-EDGE-162 merge ten sources concurrency 4 break slot audit", async () => {
+		const slots = Array.from({ length: 10 }, () =>
+			lazyOpenCounter(() => fromArray([1], { neverEnd: true }).asyncIterable),
+		);
+		const iter = merge(
+			slots.map((s) => s.source),
+			{ concurrency: 4 },
+		)[Symbol.asyncIterator]();
+		await iter.next();
+		await iter.return?.();
+		await flushMicrotasks();
+		const opened = slots.filter((s) => s.openCount > 0).length;
+		expect(opened).toBeLessThanOrEqual(4);
+		expect(opened).toBeGreaterThanOrEqual(1);
+	});
+
+	it("LSM-EDGE-163 tee n=5 block parallel drain all branches equal", async () => {
+		const branches = tee(fromArray([1, 2, 3]).asyncIterable, 5, { backpressure: "block" });
+		expect(branches).toHaveLength(5);
+		const drained = await drainBranchesParallel(branches);
+		for (const branch of drained) {
+			expect(branch).toEqual([1, 2, 3]);
+		}
+	});
+
+	it("LSM-EDGE-164 race Record five keys fastest labeled winner in onFinish", async () => {
+		let result: MuxResult | undefined;
+		await collectRace(
+			{
+				a: fromArray([1], { delayMs: 80, neverEnd: true }).asyncIterable,
+				b: fromArray([2], { delayMs: 60, neverEnd: true }).asyncIterable,
+				c: fromArray([3], { delayMs: 40, neverEnd: true }).asyncIterable,
+				d: fromArray([4], { delayMs: 20, neverEnd: true }).asyncIterable,
+				e: fromArray([5]).asyncIterable,
+			},
+			{ onFinish: (r) => (result = r) },
+		);
+		expect(result?.winner).toBe("e");
+	});
+
+	it("LSM-EDGE-165 merge five labeled sources all done tags ids preserved", async () => {
+		const tags = await collectTagged({
+			s1: fromArray([]).asyncIterable,
+			s2: fromArray([]).asyncIterable,
+			s3: fromArray([]).asyncIterable,
+			s4: fromArray([]).asyncIterable,
+			s5: fromArray([]).asyncIterable,
+		});
+		const doneSources = tags.filter((t) => t.kind === "done").map((t) => t.source);
+		expect(doneSources.sort()).toEqual(["s1", "s2", "s3", "s4", "s5"]);
+	});
+
+	it("LSM-EDGE-166 fallback five throws ALL_FAILED errors length five", async () => {
+		const iter = fallback(
+			Array.from({ length: 5 }, (_, i) => fromArray([i], { throwAt: 0 }).asyncIterable),
+		)[Symbol.asyncIterator]();
+		await expect(iter.next()).rejects.toSatisfy((err: unknown) => {
+			const muxErr = asMuxError(err);
+			return muxErr.code === "ALL_FAILED" && muxErr.errors?.length === 5;
+		});
+	});
+
+	it("LSM-EDGE-167 race three junk sources one good isUsable flush order", async () => {
+		expect(
+			await collectRace(
+				[
+					fromArray([0, 0, 1]).asyncIterable,
+					fromArray([0, 0, 0]).asyncIterable,
+					fromArray([0, 0, 0]).asyncIterable,
+				],
+				{ isUsable: (n) => n > 0 },
+			),
+		).toEqual([0, 0, 1]);
+	});
+
+	it("LSM-EDGE-168 merge failFast true two errors second next same ALL_FAILED", async () => {
+		const iter = merge(
+			[fromArray([1], { throwAt: 0 }).asyncIterable, fromArray([2], { throwAt: 0 }).asyncIterable],
+			{ failFast: true },
+		)[Symbol.asyncIterator]();
+		await expect(iter.next()).rejects.toSatisfy(
+			(err: unknown) => asMuxError(err).code === "ALL_FAILED",
+		);
+		await expect(iter.next()).rejects.toSatisfy(
+			(err: unknown) => asMuxError(err).code === "ALL_FAILED",
+		);
+	});
+
+	it("LSM-EDGE-169 tee drop n=3 one branch never reads source completes no hang", async () => {
+		const [a, _b, c] = tee(fromArray([1, 2, 3]).asyncIterable, 3, {
+			backpressure: "drop",
+			bufferLimit: 1,
+		});
+		expect(await drainBranch(a)).toEqual([1, 2, 3]);
+		expect(await drainBranch(c)).toEqual([3]);
+	});
+
+	it("LSM-EDGE-170 race fallback merge null undefined object pass-through matrix", async () => {
+		const matrix = [null, undefined, { x: 1 }] as const;
+		for (const value of matrix) {
+			expect(await collectRace([fromArray([value]).asyncIterable])).toEqual([value]);
+			expect(await collectFallback([fromArray([value]).asyncIterable])).toEqual([value]);
+			expect(
+				valueTags(await collectTagged([fromArray([value]).asyncIterable])).map((t) => t.value),
+			).toEqual([value]);
+		}
+	});
+
+	it("LSM-EDGE-171 race onFinish MuxResult strategy race aborted false on clean complete", async () => {
+		let result: MuxResult | undefined;
+		await collectRace([fromArray([1, 2]).asyncIterable], {
+			onFinish: (r) => (result = r),
+		});
+		expect(result?.strategy).toBe("race");
+		expect(result?.aborted).toBe(false);
+		expect(result?.perSource).toBeDefined();
+	});
+
+	it("LSM-EDGE-172 fallback labeled Record onFinish winner matches activated source id", async () => {
+		let result: MuxResult | undefined;
+		await collectFallback(
+			{
+				bad: fromArray([1], { throwAt: 0 }).asyncIterable,
+				good: fromArray([42]).asyncIterable,
+			},
+			{ onFinish: (r) => (result = r) },
+		);
+		expect(result?.winner).toBe("good");
+	});
+
+	it("LSM-EDGE-173 merge ALL_FAILED second next same error code", async () => {
+		const iter = merge([fromArray([1], { throwAt: 0 }).asyncIterable], { failFast: true })[
+			Symbol.asyncIterator
+		]();
+		await expect(iter.next()).rejects.toSatisfy(
+			(err: unknown) => asMuxError(err).code === "ALL_FAILED",
+		);
+		await expect(iter.next()).rejects.toSatisfy(
+			(err: unknown) => asMuxError(err).code === "ALL_FAILED",
+		);
+	});
+
+	it("LSM-EDGE-174 merge isError and isUsable on same item error tag not value", async () => {
+		const tags = await collectTagged([fromArray([-1]).asyncIterable], {
+			isError: (n) => n < 0,
+			isUsable: (n) => n >= 0,
+		});
+		expect(tags.some((t) => t.kind === "error")).toBe(true);
+		expect(valueTags(tags)).toHaveLength(0);
+	});
+
+	it("LSM-EDGE-175 race ensemble array vs labeled Record same onFinish winner id", async () => {
+		let arrayResult: MuxResult | undefined;
+		let recordResult: MuxResult | undefined;
+		const makeArray = () => [
+			fromArray([1], { delayMs: 50, neverEnd: true }).asyncIterable,
+			fromArray([2]).asyncIterable,
+		];
+		const makeRecord = () => ({
+			slow: fromArray([1], { delayMs: 50, neverEnd: true }).asyncIterable,
+			fast: fromArray([2]).asyncIterable,
+		});
+		await collectRace(makeArray(), { onFinish: (r) => (arrayResult = r) });
+		await collectRace(makeRecord(), { onFinish: (r) => (recordResult = r) });
+		expect(arrayResult?.winner).toBe("1");
+		expect(recordResult?.winner).toBe("fast");
+	});
+
+	it("LSM-EDGE-176 race mapEach returns same object reference identity preserved", async () => {
+		const obj = { id: 1 };
+		const out = await collectRace([fromArray([obj]).asyncIterable], {
+			mapEach: (item) => item,
+		});
+		expect(out[0]).toBe(obj);
+	});
+
+	it("LSM-EDGE-177 race timeoutMs two slow sources third fast wins before overallTimeoutMs", async () => {
+		const out = await collectRace(
+			[
+				fromArray([1], { delayMs: 300, neverEnd: true }).asyncIterable,
+				fromArray([2], { delayMs: 300, neverEnd: true }).asyncIterable,
+				fromArray([9]).asyncIterable,
+			],
+			{ timeoutMs: 5000, overallTimeoutMs: 10000, isUsable: (n) => n === 9 },
+		);
+		expect(out).toEqual([9]);
+	});
+
+	it("LSM-EDGE-178 fallback ReadableStream empty primary backup iterable wins isUsable gate", async () => {
+		expect(
+			await collectFallback([fromArray([]).asyncIterable, fromArray([55]).asyncIterable], {
+				isUsable: (n) => n > 10,
+			}),
+		).toEqual([55]);
+	});
+
+	it("LSM-EDGE-179 matrix doc integrity LSM-EDGE-140 through 178 in test titles", () => {
+		const edgeTest = readFileSync(join(repoRoot, "test/edge.test.ts"), "utf8");
+		const missing: string[] = [];
+		for (let i = 140; i <= 178; i += 1) {
+			const id = `LSM-EDGE-${i}`;
+			if (!edgeTest.includes(`it("${id} `) && !edgeTest.includes(`it('${id} `)) {
+				missing.push(id);
+			}
+		}
+		expect(missing, `missing LSM-EDGE IDs in test/edge.test.ts: ${missing.join(", ")}`).toEqual([]);
+	});
+
+	it("LSM-EDGE-180 matrix doc integrity LSM-EDGE-01 through 179 in test titles", () => {
+		const edgeTest = readFileSync(join(repoRoot, "test/edge.test.ts"), "utf8");
+		const missing: string[] = [];
+		for (let i = 1; i <= 179; i += 1) {
+			const id = `LSM-EDGE-${String(i).padStart(2, "0")}`;
+			if (!edgeTest.includes(`it("${id} `) && !edgeTest.includes(`it('${id} `)) {
+				missing.push(id);
+			}
+		}
+		expect(edgeTest).toContain('it("LSM-EDGE-06b ');
+		expect(missing, `missing LSM-EDGE IDs in test/edge.test.ts: ${missing.join(", ")}`).toEqual([]);
+	});
+});

@@ -3,6 +3,37 @@
 All notable changes to this project are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/); versioning follows [Semantic Versioning](https://semver.org/).
 
+## [1.0.0]
+
+### Added
+
+- **`LSM-EDGE-140`–`180`** — §H 1.0.0 production edge matrix + full-matrix integrity (`LSM-EDGE-179` §H sectional guard; `LSM-EDGE-180` full matrix `01`–`179` + `06b`)
+- **`LSM-REL-12a`–`12u`** — stable release freeze gates (semver policy, pack audit, bench baseline, engines sync, rollback docs, doc link+anchor audit, 19 diagrams)
+- **`scripts/verify-doc-links.mjs`** — internal markdown file + anchor integrity; wired into `verify:docs` (`LSM-REL-12f`)
+- **`scripts/smoke-published.mjs`** + **`pnpm smoke:published`** — post-pack consumer smoke with `--node18`, `--node20`, `--all-runtimes`
+- **6 new architecture diagrams** — `api-frozen-surface`, `edge-matrix-h`, `publish-ceremony`, `interop-matrix`, `signal-timeout-flow`, `doc-audit-map` (19 total)
+
+### Changed
+
+- **`docs/STABILITY.md`** — **Public API frozen as of `1.0.0`**; post-freeze major/minor/patch semver policy; pre-1.0 checklist archived under Historical
+- **All docs** — stable status, `npm install llm-stream-mux`, test count **945**
+- **`README.md`** — stable badge, install from npm, no pre-stable hero caveats
+- **`docs/RELEASE.md`** — publish-failure rollback runbook + GitHub Release checklist (stable); `v1.0.0` template with REL-12 gates
+- **`docs/edge-cases.md`** — §H table `140`–`180`; matrix authority through **180**
+- **`docs/testing-strategy.md`**, **`docs/faq.md`**, **`docs/compatibility.md`**, **`docs/performance.md`**, **`CONTRIBUTING.md`**, **`SECURITY.md`**
+- **`docs/proposal.MD` §13** — **D15**; §26.2 **`1.0.0`** P10 row
+- **`package.json`** — **`1.0.0`**, `smoke:published`, `verify:pre1` includes smoke-published
+- **`src/index.ts`** — `MUX_PKG_VERSION` → **`1.0.0`**
+- **`LSM-REL-10f`** / **`LSM-REL-12e`** — edge matrix authority through **`180`** / §H **`179`**
+
+### Notes
+
+- **945** tests green; **§9 runtime exports and §6.3 `MuxErrorCode` set frozen** under semver
+- First npm publish: `npm install llm-stream-mux@1.0.0`
+- **Public API unchanged** vs **`0.9.0`** (behavior + export shape; `MUX_PKG_VERSION` only)
+- Optional: **`v0.9.0`** GitHub pre-release tag for ladder completeness (see `docs/RELEASE.md`)
+- **`npm publish --provenance`** — maintainer step after green `pnpm verify:pre1`
+
 ## [0.9.0]
 
 ### Added

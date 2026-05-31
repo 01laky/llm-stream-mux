@@ -1,0 +1,22 @@
+flowchart LR
+  subgraph runtime["§9 runtime exports (frozen 1.0.0)"]
+    R[race]
+    F[fallback]
+    M[merge]
+    E[ensemble]
+    T[tee]
+    C[collect]
+    TR[toReadable]
+    TA[toAsyncIterable]
+    V[MUX_PKG_VERSION]
+    EC[MUX_ERROR_CODES]
+  end
+  subgraph codes["§6.3 MuxErrorCode (6)"]
+    C1[NO_USABLE_SOURCE]
+    C2[ALL_FAILED]
+    C3[ABORTED]
+    C4[SOURCE_ERROR]
+    C5[TIMEOUT]
+    C6[IN_BAND_ERROR]
+  end
+  EC --> codes

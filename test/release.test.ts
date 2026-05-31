@@ -428,11 +428,11 @@ const { merge, ensemble, collect } = require("llm-stream-mux");
 });
 
 describe("LSM-REL-08 cross-cutting dist contract", () => {
-	it("LSM-REL-08a d.ts CommonOptions fields and MUX_PKG_VERSION 0.9.0", () => {
+	it("LSM-REL-08a d.ts CommonOptions fields and MUX_PKG_VERSION 1.0.0", () => {
 		const dts = readFileSync(join(root, "dist/index.d.ts"), "utf8");
 		expectCommonOptionsInDts(dts);
-		expect(MUX_PKG_VERSION).toBe("0.9.0");
-		expect(readPkg().version).toBe("0.9.0");
+		expect(MUX_PKG_VERSION).toBe("1.0.0");
+		expect(readPkg().version).toBe("1.0.0");
 	});
 
 	it(
@@ -479,9 +479,9 @@ await mergeIter.return();`,
 });
 
 describe("LSM-REL-09 edge matrix dist contract", () => {
-	it("LSM-REL-09a MUX_PKG_VERSION 0.9.0 and edge.test.ts exists on disk", () => {
-		expect(MUX_PKG_VERSION).toBe("0.9.0");
-		expect(readPkg().version).toBe("0.9.0");
+	it("LSM-REL-09a MUX_PKG_VERSION 1.0.0 and edge.test.ts exists on disk", () => {
+		expect(MUX_PKG_VERSION).toBe("1.0.0");
+		expect(readPkg().version).toBe("1.0.0");
 		expect(existsSync(join(root, "test/edge.test.ts"))).toBe(true);
 		const edgeSrc = readFileSync(join(root, "test/edge.test.ts"), "utf8");
 		expect(edgeSrc).toContain("LSM-EDGE-01");
@@ -585,8 +585,8 @@ describe("LSM-REL-10 P8 examples and pack contract", () => {
 	});
 
 	it("LSM-REL-10c release prep script passes", () => {
-		expect(MUX_PKG_VERSION).toBe("0.9.0");
-		expect(readPkg().version).toBe("0.9.0");
+		expect(MUX_PKG_VERSION).toBe("1.0.0");
+		expect(readPkg().version).toBe("1.0.0");
 		execFileSync("node", ["scripts/release-prep.mjs"], { cwd: root, stdio: "pipe" });
 	});
 
@@ -661,14 +661,15 @@ if (out.length !== 1 || out[0][0] !== 42) throw new Error("race smoke");`,
 		}
 	});
 
-	it("LSM-REL-10f edge matrix authority file intact LSM-EDGE-01 through 139", () => {
+	it("LSM-REL-10f edge matrix authority file intact LSM-EDGE-01 through 180", () => {
 		const edgeSrc = readFileSync(join(root, "test/edge.test.ts"), "utf8");
 		expect(edgeSrc).toContain("LSM-EDGE-01");
-		expect(edgeSrc).toContain("LSM-EDGE-139");
+		expect(edgeSrc).toContain("LSM-EDGE-180");
 		expect(edgeSrc).toContain("LSM-EDGE ultra-extended §G");
 		expect(edgeSrc).toContain("LSM-EDGE ultra-extended §F");
+		expect(edgeSrc).toContain("LSM-EDGE ultra-extended §H");
 		const matches = edgeSrc.match(/it\("LSM-EDGE-/g);
-		expect(matches?.length).toBeGreaterThanOrEqual(139);
+		expect(matches?.length).toBeGreaterThanOrEqual(181);
 	});
 });
 
@@ -693,8 +694,8 @@ describe("LSM-REL-11 P9 pre-1.0 §25 audit contract", () => {
 		}
 	});
 
-	it("LSM-REL-11c release prep script passes at 0.9.0", () => {
-		expect(readPkg().version).toBe("0.9.0");
+	it("LSM-REL-11c release prep script passes at 1.0.0", () => {
+		expect(readPkg().version).toBe("1.0.0");
 		execFileSync("node", ["scripts/release-prep.mjs"], { cwd: root, stdio: "pipe" });
 	});
 
@@ -710,11 +711,12 @@ describe("LSM-REL-11 P9 pre-1.0 §25 audit contract", () => {
 		TARBALL_SMOKE_MS,
 	);
 
-	it("LSM-REL-11e STABILITY.md exists and references §9 not frozen until 1.0.0", () => {
+	it("LSM-REL-11e STABILITY.md frozen as of 1.0.0 active banner", () => {
 		const stability = readFileSync(join(root, "docs/STABILITY.md"), "utf8");
-		expect(stability).toContain("not semver-frozen until `1.0.0`");
-		expect(stability).toContain("MUX_PKG_VERSION");
-		expect(stability).toContain("CreateMuxError");
+		const active = stability.split(/^## Historical:/m)[0] ?? stability;
+		expect(active).toContain("frozen as of `1.0.0`");
+		expect(active).toContain("MUX_PKG_VERSION");
+		expect(active).toContain("CreateMuxError");
 	});
 
 	it("LSM-REL-11f verify-docs requires STABILITY SECURITY RELEASE smoke scripts workers fixture", () => {
@@ -760,9 +762,9 @@ describe("LSM-REL-11 P9 pre-1.0 §25 audit contract", () => {
 		expect(proposal).toContain("0.9.0");
 	});
 
-	it("LSM-REL-11k MUX_PKG_VERSION and package.json pinned 0.9.0", () => {
-		expect(MUX_PKG_VERSION).toBe("0.9.0");
-		expect(readPkg().version).toBe("0.9.0");
+	it("LSM-REL-11k MUX_PKG_VERSION and package.json pinned 1.0.0", () => {
+		expect(MUX_PKG_VERSION).toBe("1.0.0");
+		expect(readPkg().version).toBe("1.0.0");
 		const dts = readFileSync(join(root, "dist/index.d.ts"), "utf8");
 		expect(dts).not.toContain('MUX_PKG_VERSION: "0.8.0"');
 	});
@@ -845,5 +847,188 @@ describe("LSM-REL-11 P9 pre-1.0 §25 audit contract", () => {
 		for (const id of ids) {
 			expect(testSrc, `missing test reference for ${id}`).toContain(id);
 		}
+	});
+});
+
+describe("LSM-REL-12 P10 1.0.0 stable freeze contract", () => {
+	function activeStability() {
+		const stability = readFileSync(join(root, "docs/STABILITY.md"), "utf8");
+		return stability.split(/^## Historical:/m)[0] ?? stability;
+	}
+
+	it("LSM-REL-12a STABILITY.md banner frozen as of 1.0.0", () => {
+		expect(activeStability()).toContain("frozen as of `1.0.0`");
+	});
+
+	it("LSM-REL-12b README stable npm install path and no pre_stable badge", () => {
+		const readme = readFileSync(join(root, "README.md"), "utf8");
+		expect(readme).toContain("npm install llm-stream-mux");
+		expect(readme).not.toMatch(/pre[_-]stable/i);
+	});
+
+	it("LSM-REL-12c CHANGELOG 1.0.0 section explicit API freeze", () => {
+		const changelog = readFileSync(join(root, "CHANGELOG.md"), "utf8");
+		const section = changelog.split("## [1.0.0]")[1]?.split(/^## \[/m)[0] ?? "";
+		expect(section).toMatch(/frozen/i);
+		expect(section).toContain("§9");
+		expect(section).toContain("§6.3");
+	});
+
+	it("LSM-REL-12d Version pins at 1.0.0", () => {
+		expect(readPkg().version).toBe("1.0.0");
+		expect(MUX_PKG_VERSION).toBe("1.0.0");
+		const dts = readFileSync(join(root, "dist/index.d.ts"), "utf8");
+		expect(dts).toContain('"1.0.0"');
+	});
+
+	it("LSM-REL-12e Edge matrix authority LSM-EDGE-179 and §H", () => {
+		const edgeSrc = readFileSync(join(root, "test/edge.test.ts"), "utf8");
+		expect(edgeSrc).toContain("LSM-EDGE-179");
+		expect(edgeSrc).toContain("LSM-EDGE ultra-extended §H");
+	});
+
+	it("LSM-REL-12f verify-doc-links passes", () => {
+		execFileSync("node", ["scripts/verify-doc-links.mjs"], { cwd: root, stdio: "pipe" });
+	});
+
+	it("LSM-REL-12g verify-docs includes smoke-published verify-doc-links 6 new diagrams", () => {
+		const verifyDocs = readFileSync(join(root, "scripts/verify-docs.mjs"), "utf8");
+		for (const token of [
+			"scripts/smoke-published.mjs",
+			"scripts/verify-doc-links.mjs",
+			"api-frozen-surface.mmd",
+			"edge-matrix-h.mmd",
+			"publish-ceremony.mmd",
+			"interop-matrix.mmd",
+			"signal-timeout-flow.mmd",
+			"doc-audit-map.mmd",
+		]) {
+			expect(verifyDocs).toContain(token);
+		}
+		const pkg = readFileSync(join(root, "package.json"), "utf8");
+		expect(pkg).toContain("smoke:published");
+	});
+
+	it("LSM-REL-12h doc headers reference 1.0.0 stable", () => {
+		for (const rel of [
+			"docs/faq.md",
+			"docs/testing-strategy.md",
+			"docs/compatibility.md",
+			"docs/edge-cases.md",
+		]) {
+			expect(readFileSync(join(root, rel), "utf8")).toContain("1.0.0");
+		}
+	});
+
+	it(
+		"LSM-REL-12i smoke-published.mjs passes at 1.0.0",
+		() => {
+			execFileSync("node", ["scripts/smoke-published.mjs"], {
+				cwd: root,
+				stdio: "pipe",
+				timeout: TARBALL_SMOKE_MS,
+			});
+		},
+		TARBALL_SMOKE_MS,
+	);
+
+	it("LSM-REL-12j proposal D15 and 1.0.0 ladder row", () => {
+		const proposal = readFileSync(join(root, "docs/proposal.MD"), "utf8");
+		expect(proposal).toContain("D15");
+		expect(proposal).toMatch(/1\.0\.0.*P10/i);
+	});
+
+	it("LSM-REL-12k REL-11p exports snapshot unchanged vs 0.9.0 shape", () => {
+		const pkg = readPkg();
+		expect([...(pkg.files ?? [])].sort()).toEqual(["LICENSE", "README.md", "dist"]);
+		expect(pkg.exports).toEqual({
+			".": {
+				types: "./dist/index.d.ts",
+				import: "./dist/index.js",
+				require: "./dist/index.cjs",
+			},
+		});
+	});
+
+	it("LSM-REL-12l CHANGELOG 1.0.0 LSM ID integrity", () => {
+		const changelog = readFileSync(join(root, "CHANGELOG.md"), "utf8");
+		const section = changelog.split("## [1.0.0]")[1]?.split(/^## \[/m)[0] ?? "";
+		const ids = [...new Set([...section.matchAll(/LSM-[A-Z]+-\d+[a-z]?/g)].map((m) => m[0]))];
+		expect(ids.length).toBeGreaterThan(0);
+		const testDir = join(root, "test");
+		const walk = (dir: string): string => {
+			let body = "";
+			for (const entry of readdirSync(dir, { withFileTypes: true })) {
+				const path = join(dir, entry.name);
+				if (entry.isDirectory()) body += walk(path);
+				else if (entry.name.endsWith(".ts")) body += readFileSync(path, "utf8");
+			}
+			return body;
+		};
+		const testSrc = walk(testDir);
+		for (const id of ids) {
+			expect(testSrc, `missing test reference for ${id}`).toContain(id);
+		}
+	});
+
+	it("LSM-REL-12m Public API runtime exports unchanged vs 0.9.0", () => {
+		const dts = readFileSync(join(root, "dist/index.d.ts"), "utf8");
+		for (const name of PUBLIC_RUNTIME_EXPORTS) {
+			expect(dts).toContain(name);
+		}
+		for (const name of ["muxError", "fromAsyncIterable"]) {
+			expect(dts).not.toMatch(new RegExp(`export declare (const|function|var) ${name}\\b`));
+		}
+	});
+
+	it("LSM-REL-12n release-prep passes at 1.0.0", () => {
+		execFileSync("node", ["scripts/release-prep.mjs"], { cwd: root, stdio: "pipe" });
+	});
+
+	it("LSM-REL-12o diagrams check 19 SVGs present and fresh", () => {
+		execFileSync("node", ["scripts/check-diagrams.mjs"], { cwd: root, stdio: "pipe" });
+		const check = readFileSync(join(root, "scripts/check-diagrams.mjs"), "utf8");
+		const count = (check.match(/^\s*"[a-z0-9-]+\.mmd",/gm) ?? []).length;
+		expect(count).toBe(19);
+	});
+
+	it("LSM-REL-12p testing-strategy documents REL-12 and EDGE §H", () => {
+		const body = readFileSync(join(root, "docs/testing-strategy.md"), "utf8");
+		expect(body).toContain("LSM-REL-12");
+		expect(body).toContain("§H");
+		expect(body).toContain("945");
+	});
+
+	it("LSM-REL-12q STABILITY.md post-freeze semver policy declared", () => {
+		const active = activeStability();
+		expect(active).toMatch(/major/i);
+		expect(active).toMatch(/minor/i);
+		expect(active).toMatch(/patch/i);
+	});
+
+	it("LSM-REL-12r RELEASE.md stable template and rollback runbook complete", () => {
+		const release = readFileSync(join(root, "docs/RELEASE.md"), "utf8");
+		expect(release).toContain("v1.0.0");
+		expect(release).toMatch(/Publish failure|rollback/i);
+		expect(release).toMatch(/GitHub Release checklist/i);
+	});
+
+	it("LSM-REL-12s engines.node compatibility.md and ci.yml Node matrix aligned", () => {
+		const pkg = readPkg();
+		expect(pkg.engines?.node).toContain("18");
+		const compat = readFileSync(join(root, "docs/compatibility.md"), "utf8");
+		expect(compat).toMatch(/18.*20.*22|18, 20, 22/);
+		const ci = readFileSync(join(root, ".github/workflows/ci.yml"), "utf8");
+		expect(ci).toContain("18");
+		expect(ci).toContain("20");
+		expect(ci).toContain("22");
+	});
+
+	it("LSM-REL-12t npm pack tarball contents match REL-11p publish shape", () => {
+		execFileSync("node", ["scripts/verify-pack.mjs"], { cwd: root, stdio: "pipe" });
+	});
+
+	it("LSM-REL-12u bench-smoke --warn passes at 1.0.0 baseline", () => {
+		execFileSync("node", ["scripts/bench-smoke.mjs", "--warn"], { cwd: root, stdio: "pipe" });
 	});
 });
