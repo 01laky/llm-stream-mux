@@ -27,7 +27,7 @@ try {
 	writeFileSync(
 		join(temp, "esm.mjs"),
 		`
-import { MUX_PKG_VERSION, MUX_ERROR_CODES, collect, tee, toAsyncIterable } from "llm-stream-mux";
+import { MUX_PKG_VERSION, MUX_ERROR_CODES, collect, race, tee, toAsyncIterable } from "llm-stream-mux";
 if (MUX_PKG_VERSION !== ${JSON.stringify(version)}) throw new Error("ESM version mismatch");
 if (!Array.isArray(MUX_ERROR_CODES) || MUX_ERROR_CODES.length !== 6) throw new Error("ESM codes");
 const empty = await collect((async function* () {})());
@@ -37,6 +37,11 @@ if (teeBranches.length !== 2) throw new Error("ESM tee");
 await teeBranches[1].cancel();
 const teeEmpty = await collect(toAsyncIterable(teeBranches[0]));
 if (teeEmpty.length !== 0) throw new Error("ESM tee drain");
+const raceOut = await collect(race([
+  (async function* () { yield 1; })(),
+  (async function* () { yield 2; })(),
+]));
+if (raceOut.length !== 1 || raceOut[0] !== 1) throw new Error("ESM race");
 `,
 	);
 
@@ -45,7 +50,7 @@ if (teeEmpty.length !== 0) throw new Error("ESM tee drain");
 		`
 import { createRequire } from "node:module";
 const require = createRequire(import.meta.url);
-const { MUX_PKG_VERSION, MUX_ERROR_CODES, collect, tee, toAsyncIterable } = require("llm-stream-mux");
+const { MUX_PKG_VERSION, MUX_ERROR_CODES, collect, race, tee, toAsyncIterable } = require("llm-stream-mux");
 if (MUX_PKG_VERSION !== ${JSON.stringify(version)}) throw new Error("CJS version mismatch");
 if (!Array.isArray(MUX_ERROR_CODES) || MUX_ERROR_CODES.length !== 6) throw new Error("CJS codes");
 const empty = await collect((async function* () {})());
@@ -55,6 +60,11 @@ if (teeBranches.length !== 2) throw new Error("CJS tee");
 await teeBranches[1].cancel();
 const teeEmpty = await collect(toAsyncIterable(teeBranches[0]));
 if (teeEmpty.length !== 0) throw new Error("CJS tee drain");
+const raceOut = await collect(race([
+  (async function* () { yield 1; })(),
+  (async function* () { yield 2; })(),
+]));
+if (raceOut.length !== 1 || raceOut[0] !== 1) throw new Error("CJS race");
 `,
 	);
 

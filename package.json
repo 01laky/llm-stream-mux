@@ -1,6 +1,6 @@
 {
 	"name": "llm-stream-mux",
-	"version": "0.2.0",
+	"version": "0.3.0",
 	"description": "Zero-dependency TypeScript stream orchestration for LLM pipelines — race, fallback, merge, and tee over any AsyncIterable or ReadableStream, generic over T.",
 	"license": "MIT",
 	"author": "Ladislav Kostolny <01laky@gmail.com>",

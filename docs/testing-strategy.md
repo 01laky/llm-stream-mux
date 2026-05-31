@@ -1,13 +1,13 @@
 # Testing strategy
 
-**Status:** P2 active — **≈253** tests in CI via `pnpm verify`. Current release: **`0.2.0`** (P0+P1+P2).
+**Status:** P3 active — **≈337** tests in CI via `pnpm verify`. Current release: **`0.3.0`** (P0+P1+P2+P3).
 
 ---
 
 ## Runner
 
 - **Vitest** — `pnpm test` after `pnpm build` (release tests assert `dist/` artifacts).
-- Test IDs in titles: `it("LSM-TEE-03 block backpressure gates source reads", …)`.
+- Test IDs in titles: `it("LSM-RACE-03 pre-usable buffer on winner flushed in order", …)`.
 
 ---
 
@@ -15,13 +15,13 @@
 
 | Prefix        | Scope                                               | Status                         |
 | ------------- | --------------------------------------------------- | ------------------------------ |
-| `LSM-REL`     | release, build, export map, package smoke           | **P0–P2** — `LSM-REL-01`–`04`  |
+| `LSM-REL`     | release, build, export map, package smoke           | **P0–P3** — `LSM-REL-01`–`05`  |
 | `LSM-TYP`     | public type shapes, hooks, enums, d.ts contract     | **P0+P1** — `LSM-TYP-01`–`69`  |
 | `LSM-EDGE-P0` | matrix error-code prelude before runtime            | **P0** — `LSM-EDGE-P0-01`–`26` |
 | `LSM-SRC`     | Source union fixture edge cases (pre-runtime)       | **P0** — `LSM-SRC-01`–`12`     |
 | `LSM-CORE`    | normalizeSource, abort, interop, telemetry, errors  | **P1** — `LSM-CORE-01`–`60`    |
 | `LSM-TEE`     | N-way tee, backpressure policies, cancel            | **P2** — `LSM-TEE-01`–`64`     |
-| `LSM-RACE`    | first usable, loser cancel, commit                  | P3                             |
+| `LSM-RACE`    | first usable, loser cancel, commit                  | **P3** — `LSM-RACE-01`–`80`    |
 | `LSM-FB`      | lazy failover, FailoverPolicy, ALL_FAILED           | P4                             |
 | `LSM-MERGE`   | Tagged output, read-loop, concurrency, backpressure | P5                             |
 | `LSM-X`       | timeouts, mapEach, onFinish, HWM                    | P6                             |
@@ -29,15 +29,15 @@
 
 ---
 
-## P2 test files
+## P3 test files
 
-| File                      | IDs                           | Count |
-| ------------------------- | ----------------------------- | ----- |
-| `test/tee.test.ts`        | `LSM-TEE-01`–`64`             | 64    |
-| `test/release.test.ts`    | `LSM-REL-04a/b` (+ prior REL) | 10    |
-| `test/helpers/streams.ts` | `countingSource()` helper     | —     |
+| File                      | IDs                                           | Count |
+| ------------------------- | --------------------------------------------- | ----- |
+| `test/race.test.ts`       | `LSM-RACE-01`–`80`                            | 80    |
+| `test/release.test.ts`    | `LSM-REL-05a/b` (+ prior REL)                 | 12    |
+| `test/helpers/streams.ts` | `lazyOpenCounter()`, `cancelSpyingReadable()` | —     |
 
-Prior P0+P1 files unchanged except `LSM-REL-02` now exports `tee`.
+Prior P0+P2 files unchanged except `LSM-REL-02` now exports `tee` and `race`.
 
 ---
 
@@ -67,6 +67,7 @@ CI matrix: Node **18, 20, 22**.
 ## Related
 
 - [Edge-case matrix](./edge-cases.md)
+- [Race win diagram](./img/race-win.svg)
 - [Tee fan-out diagram](./img/tee-fanout.svg)
 - [Core internals diagram](./img/core-internals.svg)
 - [Public API types diagram](./img/public-api-types.svg)

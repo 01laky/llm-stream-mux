@@ -158,10 +158,10 @@ if (empty.length !== 0) throw new Error("tee drain");`,
 		}
 	});
 
-	it("LSM-REL-04b tee in d.ts strategies still absent", () => {
+	it("LSM-REL-04b tee in d.ts race present fallback merge absent", () => {
 		const dts = readFileSync(join(root, "dist/index.d.ts"), "utf8");
 		expect(dts).toMatch(/declare function tee\b/);
-		expect(dts).not.toMatch(/declare function race\b/);
+		expect(dts).toMatch(/declare function race\b/);
 		expect(dts).not.toMatch(/declare function fallback\b/);
 		expect(dts).not.toMatch(/declare function merge\b/);
 		expect(dts).not.toContain("normalizeSource");
@@ -170,6 +170,68 @@ if (empty.length !== 0) throw new Error("tee drain");`,
 		for (const file of ["dist/index.js", "dist/index.cjs"]) {
 			const body = readFileSync(join(root, file), "utf8");
 			expect(body).toContain("tee");
+			expect(body).not.toContain("node_modules");
+		}
+	});
+});
+
+describe("LSM-REL-05 race dist contract", () => {
+	it("LSM-REL-05a race runtime smoke from tarball", () => {
+		const temp = mkdtempSync(join(tmpdir(), "lsm-race-smoke-"));
+		try {
+			execFileSync("npm", ["pack", "--pack-destination", temp], { cwd: root, stdio: "pipe" });
+			const tarball = readdirSync(temp).find((f) => f.endsWith(".tgz"));
+			expect(tarball).toBeTruthy();
+
+			writeFileSync(
+				join(temp, "package.json"),
+				JSON.stringify({ type: "module", dependencies: {} }, null, 2),
+			);
+			execFileSync("npm", ["install", "--ignore-scripts", join(temp, tarball!)], {
+				cwd: temp,
+				stdio: "pipe",
+			});
+
+			writeFileSync(
+				join(temp, "esm.mjs"),
+				`import { race, collect } from "llm-stream-mux";
+const out = await collect(race([
+  (async function* () { yield 1; yield 2; })(),
+  (async function* () { yield 9; })(),
+]));
+if (out.length !== 2 || out[0] !== 1 || out[1] !== 2) throw new Error("race winner");`,
+			);
+			writeFileSync(
+				join(temp, "cjs.mjs"),
+				`import { createRequire } from "node:module";
+const require = createRequire(import.meta.url);
+const { race, collect } = require("llm-stream-mux");
+(async () => {
+  const out = await collect(race([
+    (async function* () { yield 1; yield 2; })(),
+    (async function* () { yield 9; })(),
+  ]));
+  if (out.length !== 2 || out[0] !== 1 || out[1] !== 2) throw new Error("race winner");
+})();`,
+			);
+			execFileSync("node", ["esm.mjs"], { cwd: temp, stdio: "pipe" });
+			execFileSync("node", ["cjs.mjs"], { cwd: temp, stdio: "pipe" });
+		} finally {
+			rmSync(temp, { recursive: true, force: true });
+		}
+	});
+
+	it("LSM-REL-05b race in d.ts fallback merge still absent", () => {
+		const dts = readFileSync(join(root, "dist/index.d.ts"), "utf8");
+		expect(dts).toMatch(/declare function race\b/);
+		expect(dts).not.toMatch(/declare function fallback\b/);
+		expect(dts).not.toMatch(/declare function merge\b/);
+		expect(dts).not.toContain("normalizeSource");
+		expect(dts).not.toContain("createTelemetry");
+		expect(dts).not.toMatch(/declare function muxError\b/);
+		for (const file of ["dist/index.js", "dist/index.cjs"]) {
+			const body = readFileSync(join(root, file), "utf8");
+			expect(body).toContain("race");
 			expect(body).not.toContain("node_modules");
 		}
 	});

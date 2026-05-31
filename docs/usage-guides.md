@@ -1,6 +1,6 @@
 # Usage guides
 
-**Status:** Pre-implementation — API frozen in [`proposal.MD`](./proposal.MD) §9; runnable snippets land with P3–P5.
+**Status:** P3 — `race` implemented in **`0.3.0`**; `fallback` / `merge` land with P4–P5. API frozen in [`proposal.MD`](./proposal.MD) §9.
 
 Strategy-focused guides for `llm-stream-mux`. For ecosystem pairing with [`llm-stream-assemble`](https://github.com/01laky/llm-stream-assemble) and guard, see [integration-cookbook](./integration-cookbook.md).
 
@@ -18,7 +18,7 @@ Hooks (all optional): `isError`, `isUsable`, `isFinal`, `mapEach` — evaluated 
 
 ## race
 
-Start N sources; forward the **first usable** stream; cancel losers.
+Start N sources; forward the **first usable** stream; cancel losers. **Implemented in `0.3.0`.**
 
 ```ts
 import { race } from "llm-stream-mux";

@@ -3,6 +3,36 @@
 All notable changes to this project are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/); versioning follows [Semantic Versioning](https://semver.org/).
 
+## [0.3.0]
+
+### Added
+
+- **`race(sources, opts?)`** — first-usable N→1 strategy (§7.3)
+- **`src/internal/race-engine.ts`** — parallel candidate coordinator over `normalizeSources`
+- **`src/race.ts`** — empty-source sync guard + `normalizeSources` at call site
+- **`test/race.test.ts`** — `LSM-RACE-01`–`80` (extended edge cases `58`–`80`)
+- **`test/helpers/streams.ts`** — `lazyOpenCounter()`, `cancelSpyingReadable()`
+- **`LSM-REL-05a/b`** — dist + smoke contract for `race`
+- **Diagram** — `docs/img/race-win.mmd` + SVG
+
+### Changed
+
+- **`src/index.ts`** — exports `race`; `MUX_PKG_VERSION` → `0.3.0`
+- **`scripts/smoke-package.mjs`** — smoke two-way `race`
+- **`scripts/build-diagrams.mjs`** + **`scripts/check-diagrams.mjs`** — 10 diagrams including `race-win`
+- **Docs** — testing strategy, edge-case matrix, README status, usage-guides race section
+
+### Fixed
+
+- **`race-engine`** — consumer `next()` throws `queueError` when coordinator closes with error (not spurious `{ done: true }`)
+- **`race-engine`** — `pumpWinner` scheduled async after win to avoid backpressure deadlock with trigger item
+
+### Notes
+
+- `fallback` / `merge` still types-only until P4–P5
+- `timeoutMs`, `overallTimeoutMs`, `highWaterMark` on strategies deferred to P6
+- Next milestone **`0.4.0`** after P4 (`fallback`)
+
 ## [0.2.0]
 
 ### Added

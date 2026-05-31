@@ -14,6 +14,7 @@ const diagrams = [
 	"public-api-types.mmd",
 	"core-internals.mmd",
 	"tee-fanout.mmd",
+	"race-win.mmd",
 ];
 
 const errors = [];

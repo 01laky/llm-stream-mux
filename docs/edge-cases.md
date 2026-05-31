@@ -22,7 +22,7 @@ A source that emits an empty or metadata frame before real content can win a nai
 
 **What mux does:** optional `isUsable` gates the winner; pre-usable items are **buffered and flushed in order** once a source wins (§7.3).
 
-**Tests (planned):** `LSM-RACE-02`, `LSM-RACE-03`.
+**Tests:** `LSM-RACE-02`, `LSM-RACE-03`, `LSM-RACE-04`, `LSM-RACE-48`, `LSM-RACE-58`, `LSM-RACE-79`.
 
 ---
 
@@ -60,33 +60,33 @@ Calling `return()` on an async iterator does not guarantee the underlying HTTP r
 
 The public API is **generic over `T`** — errors cannot be synthesized as `T`, so merge uses `Tagged<T>` with explicit `kind` variants. These are pinned at P0 before runtime strategies exist:
 
-| Case                                           | Risk                              | P0 pin                                                                              |
-| ---------------------------------------------- | --------------------------------- | ----------------------------------------------------------------------------------- |
-| `Tagged` used as plain union without narrowing | Access `value` on `error` branch  | `LSM-TYP-01`–`03` discriminant tests                                                |
-| `ALL_FAILED` without `errors[]`                | Loses per-source diagnostics      | `LSM-TYP-04` aggregate shape                                                        |
-| `Sources` labeled vs positional confusion      | Wrong `source` tags in merge      | `LSM-TYP-06` three input forms                                                      |
-| Lazy thunk invoked at call site                | Breaks failover cost model        | `LSM-TYP-07` deferred invocation                                                    |
-| `fromAsyncIterable` alias creep                | Violates D10                      | `LSM-REL-02` export denial                                                          |
-| Premature `race()` stub in public API          | False semver promise              | `LSM-REL-02` strategy export denial                                                 |
-| `MuxErrorCode` drift vs `MUX_ERROR_CODES`      | Telemetry/SIEM mismatch           | `LSM-REL-02`, `LSM-TYP-16`–`21`, `LSM-TYP-45`                                       |
-| `dist/index.d.ts` missing exports / leaks API  | Broken consumers                  | `LSM-TYP-51`, `LSM-TYP-52`                                                          |
-| Matrix error codes before runtime exists       | Spec drift vs implementation      | `LSM-EDGE-P0-01`–`26`                                                               |
-| Hook composition / policy literals             | Wrong defaults at call site       | `LSM-TYP-30`–`35`                                                                   |
-| Byte vs event generic `T`                      | Accidental event model coupling   | `LSM-TYP-23`, `LSM-TYP-24`                                                          |
-| Fn signature types (Race/Merge/Tee/interop)    | Wrong consumer typings at P1      | `LSM-TYP-55`–`58`                                                                   |
-| Source union runtime (empty/cancel/lazy)       | Broken edge matrix at P7          | `LSM-SRC-01`–`08`                                                                   |
-| `MUX_ERROR_CODES` mutability                   | Telemetry enum drift              | `LSM-TYP-63`                                                                        |
-| Cancel honesty / post-cancel lock              | Leaks + double-read in strategies | `LSM-CORE-05`–`07`, `LSM-CORE-23`, `LSM-CORE-31`–`32`, `LSM-CORE-36`, `LSM-CORE-53` |
-| `SourceReadResult` error branch                | Merge read-loop poison            | `LSM-CORE-11`, `LSM-CORE-30`, `LSM-CORE-52`, `LSM-CORE-60`                          |
-| Interop round-trip + stream errors             | Broken boundaries                 | `LSM-CORE-15`, `LSM-CORE-22`, `LSM-CORE-45`–`49`, `LSM-CORE-55`–`56`, `LSM-CORE-59` |
-| Duplicate merge source ids                     | Wrong tags in ensemble            | `LSM-CORE-26`, `LSM-CORE-58`                                                        |
-| Empty / exhausted sources                      | Premature done or hang            | `LSM-CORE-28`–`29`, `LSM-SRC-01`–`02`, `LSM-CORE-51`, `LSM-CORE-55`                 |
-| Abort signal fan-in                            | Missed parent/timeout abort       | `LSM-CORE-10`, `LSM-CORE-21`, `LSM-CORE-37`–`39`, `LSM-CORE-54`                     |
-| Telemetry lifecycle gaps                       | Wrong `MuxResult` at `onFinish`   | `LSM-CORE-19`–`20`, `LSM-CORE-25`, `LSM-CORE-27`, `LSM-CORE-43`–`44`, `LSM-CORE-57` |
-| `CreateMuxError` public / `muxError` internal  | API surface drift                 | `LSM-TYP-69`, `LSM-CORE-17`–`18`, `LSM-CORE-41`–`42`                                |
-| Fixture throw / neverEnd / delay               | Flaky strategy tests later        | `LSM-SRC-09`–`12`, `LSM-CORE-24`                                                    |
+| Case                                                  | Risk                              | P0 pin                                                                              |
+| ----------------------------------------------------- | --------------------------------- | ----------------------------------------------------------------------------------- |
+| `Tagged` used as plain union without narrowing        | Access `value` on `error` branch  | `LSM-TYP-01`–`03` discriminant tests                                                |
+| `ALL_FAILED` without `errors[]`                       | Loses per-source diagnostics      | `LSM-TYP-04` aggregate shape                                                        |
+| `Sources` labeled vs positional confusion             | Wrong `source` tags in merge      | `LSM-TYP-06` three input forms                                                      |
+| Lazy thunk invoked at call site                       | Breaks failover cost model        | `LSM-TYP-07` deferred invocation                                                    |
+| `fromAsyncIterable` alias creep                       | Violates D10                      | `LSM-REL-02` export denial                                                          |
+| Premature `fallback()` / `merge()` stub in public API | False semver promise              | `LSM-REL-02` strategy export denial (race + tee exported in P2–P3)                  |
+| `MuxErrorCode` drift vs `MUX_ERROR_CODES`             | Telemetry/SIEM mismatch           | `LSM-REL-02`, `LSM-TYP-16`–`21`, `LSM-TYP-45`                                       |
+| `dist/index.d.ts` missing exports / leaks API         | Broken consumers                  | `LSM-TYP-51`, `LSM-TYP-52`                                                          |
+| Matrix error codes before runtime exists              | Spec drift vs implementation      | `LSM-EDGE-P0-01`–`26`                                                               |
+| Hook composition / policy literals                    | Wrong defaults at call site       | `LSM-TYP-30`–`35`                                                                   |
+| Byte vs event generic `T`                             | Accidental event model coupling   | `LSM-TYP-23`, `LSM-TYP-24`                                                          |
+| Fn signature types (Race/Merge/Tee/interop)           | Wrong consumer typings at P1      | `LSM-TYP-55`–`58`                                                                   |
+| Source union runtime (empty/cancel/lazy)              | Broken edge matrix at P7          | `LSM-SRC-01`–`08`                                                                   |
+| `MUX_ERROR_CODES` mutability                          | Telemetry enum drift              | `LSM-TYP-63`                                                                        |
+| Cancel honesty / post-cancel lock                     | Leaks + double-read in strategies | `LSM-CORE-05`–`07`, `LSM-CORE-23`, `LSM-CORE-31`–`32`, `LSM-CORE-36`, `LSM-CORE-53` |
+| `SourceReadResult` error branch                       | Merge read-loop poison            | `LSM-CORE-11`, `LSM-CORE-30`, `LSM-CORE-52`, `LSM-CORE-60`                          |
+| Interop round-trip + stream errors                    | Broken boundaries                 | `LSM-CORE-15`, `LSM-CORE-22`, `LSM-CORE-45`–`49`, `LSM-CORE-55`–`56`, `LSM-CORE-59` |
+| Duplicate merge source ids                            | Wrong tags in ensemble            | `LSM-CORE-26`, `LSM-CORE-58`                                                        |
+| Empty / exhausted sources                             | Premature done or hang            | `LSM-CORE-28`–`29`, `LSM-SRC-01`–`02`, `LSM-CORE-51`, `LSM-CORE-55`                 |
+| Abort signal fan-in                                   | Missed parent/timeout abort       | `LSM-CORE-10`, `LSM-CORE-21`, `LSM-CORE-37`–`39`, `LSM-CORE-54`                     |
+| Telemetry lifecycle gaps                              | Wrong `MuxResult` at `onFinish`   | `LSM-CORE-19`–`20`, `LSM-CORE-25`, `LSM-CORE-27`, `LSM-CORE-43`–`44`, `LSM-CORE-57` |
+| `CreateMuxError` public / `muxError` internal         | API surface drift                 | `LSM-TYP-69`, `LSM-CORE-17`–`18`, `LSM-CORE-41`–`42`                                |
+| Fixture throw / neverEnd / delay                      | Flaky strategy tests later        | `LSM-SRC-09`–`12`, `LSM-CORE-24`                                                    |
 
-Diagram: [public-api-types.svg](./img/public-api-types.svg) · [core-internals.svg](./img/core-internals.svg).
+Diagram: [public-api-types.svg](./img/public-api-types.svg) · [core-internals.svg](./img/core-internals.svg) · [race-win.svg](./img/race-win.svg).
 
 ---
 
@@ -100,6 +100,8 @@ Diagram: [public-api-types.svg](./img/public-api-types.svg) · [core-internals.s
 | source throws before first item | disqualified       | failover                | `error` tag, others continue | per policy     |
 | consumer breaks early (`break`) | cancel all         | cancel active           | cancel all sources           | branch rules   |
 | `signal` already aborted        | `ABORTED`          | `ABORTED`               | `ABORTED`                    | branches error |
+
+Race pins: `LSM-RACE-05`, `LSM-RACE-09`, `LSM-RACE-19`, `LSM-RACE-28`, `LSM-RACE-43`, `LSM-RACE-57`, `LSM-RACE-62`–`74`, `LSM-RACE-80`.
 
 Each cell → `LSM-EDGE-NN` in `test/edge.test.ts` (P7).
 

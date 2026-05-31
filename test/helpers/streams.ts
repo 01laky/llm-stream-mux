@@ -161,3 +161,46 @@ export function countingSource<T>(inner: Source<T> | (() => Source<T>)) {
 		},
 	};
 }
+
+/** Wraps a lazy factory; increments openCount when the thunk runs. */
+export function lazyOpenCounter<T>(factory: () => Source<T>) {
+	let openCount = 0;
+	const source: Source<T> = () => {
+		openCount += 1;
+		return factory();
+	};
+	return {
+		source,
+		get openCount() {
+			return openCount;
+		},
+	};
+}
+
+/** ReadableStream with cancel reason spy. */
+export function cancelSpyingReadable<T>() {
+	const cancelReasons: unknown[] = [];
+	let controllerRef: ReadableStreamDefaultController<T> | undefined;
+
+	const stream = new ReadableStream<T>({
+		start(controller) {
+			controllerRef = controller;
+		},
+		cancel(reason) {
+			cancelReasons.push(reason);
+		},
+	});
+
+	return {
+		stream,
+		enqueue(item: T) {
+			controllerRef?.enqueue(item);
+		},
+		close() {
+			controllerRef?.close();
+		},
+		get cancelReasons() {
+			return cancelReasons;
+		},
+	};
+}

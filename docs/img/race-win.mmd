@@ -1,0 +1,39 @@
+flowchart TB
+  consumer["Consumer AsyncIterator.next()"]
+  race["race() AsyncIterable"]
+  coord["RaceCoordinator"]
+
+  consumer --> race --> coord
+
+  subgraph phase1["Phase 1 — no winner yet"]
+    src0["Source 0..N normalizeSources"]
+    parallel["parallel pending reads"]
+    prace["Promise.race loop"]
+    buffer["preUsableBuffer per id"]
+    disq["disqualify: isError / transport fail"]
+    src0 --> parallel --> prace
+    prace -->|"non-usable"| buffer
+    prace --> disq
+  end
+
+  coord --> phase1
+
+  subgraph phase2["Phase 2 — winner selected"]
+    flush["flush preUsableBuffer winner in order"]
+    map["mapEach"]
+    live["live winner reads max 1 queued"]
+    losers["losers cancel race-lost"]
+    flush --> map --> consumer
+    live --> map
+    coord --> losers
+  end
+
+  prace -->|"first usable / isFinal"| phase2
+
+  subgraph outcomes["Outcomes"]
+    nus["all disqualified → NO_USABLE_SOURCE"]
+    abt["signal abort → ABORTED"]
+    err["winner error post-commit → propagate no failover"]
+  end
+
+  coord --> outcomes
