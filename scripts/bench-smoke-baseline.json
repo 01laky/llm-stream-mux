@@ -1,0 +1,6 @@
+{
+	"raceMedianMs": 50,
+	"mergeMedianMs": 50,
+	"regressionWarnRatio": 1.2,
+	"regressionFailRatio": 2.0
+}

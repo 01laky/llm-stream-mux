@@ -1,0 +1,31 @@
+flowchart TB
+  subgraph verify["pnpm verify (CI)"]
+    D[verify:deps] --> P[verify:portability]
+    P --> L[lint + typecheck]
+    L --> B[build]
+    B --> E[typecheck:examples]
+    E --> T[test — LSM-* 863]
+    T --> SP[smoke:package]
+    SP --> VD[verify:docs]
+    VD --> DG[diagrams:check]
+    DG --> F[format]
+  end
+
+  subgraph pre1["pnpm verify:pre1 (maintainer)"]
+    V[verify] --> RP[release:prep]
+    RP --> SR[smoke:runtimes --skip-optional]
+    SR --> SC[smoke:consumer ESM+CJS]
+  end
+
+  subgraph full["release:prep --full"]
+    SRC[smoke:runtimes --ci] --> SCC[smoke:consumer]
+    SCC --> BS[bench-smoke --warn]
+  end
+
+  subgraph ci2["smoke-runtimes.yml"]
+    N[Node baseline] --> BU[Bun]
+    BU --> DE[Deno]
+  end
+
+  verify --> pre1
+  pre1 -.-> full

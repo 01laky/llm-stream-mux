@@ -9,7 +9,7 @@ export default tseslint.config(
 		ignores: ["dist/**", "node_modules/**", "coverage/**", "docs/img/*.svg"],
 	},
 	{
-		files: ["scripts/**/*.mjs", "eslint.config.js"],
+		files: ["scripts/**/*.mjs", "examples/**/*.mjs", "eslint.config.js"],
 		languageOptions: {
 			ecmaVersion: 2022,
 			sourceType: "module",

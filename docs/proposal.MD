@@ -489,6 +489,11 @@ This dual placement is a key differentiator vs. a generic async-iterator utility
 - **D13 — P8 ships as `0.8.0`; `1.0.0` = publish + API freeze.** P8 scope (§24) lands at
   **`0.8.0`**. **`1.0.0`** is tagged only when §25 Definition of done is audited and §9/§6.3
   are explicitly frozen for npm publish.
+- **D14 — P9 ships as `0.9.0`; `1.0.0` = publish + freeze only.** P9 scope is §25 audit
+  automation (`LSM-REL-11a`–`11q`), multi-runtime smoke (Bun/Deno), consumer smoke (ESM+CJS),
+  Workers fixture, `SECURITY.md`, `docs/RELEASE.md`, `pnpm verify:pre1`, and **`docs/STABILITY.md`**
+  (incl. npm provenance checklist). No new public API. **`1.0.0`** is tagged when the maintainer publishes
+  to npm and declares §9/§6.3 frozen under semver.
 
 ## 14. Open questions
 
@@ -770,7 +775,8 @@ when §25 Definition of done is fully satisfied.
 | `0.6.0` | P6            | Cross-cutting complete (timeouts, `mapEach`, `SourceEvent`, `MuxResult`/`onFinish`, HWM). Full API per §9.      |
 | `0.7.0` | P7            | Edge-case matrix + contract tests all green; no-leak guarantees verified.                                       |
 | `0.8.0` | P8            | Docs, examples, cookbook, README; `release:prep` green; examples typecheck vs `dist/`.                          |
-| `1.0.0` | P8 + §25      | npm publish; §9/§6.3 API frozen under semver; Definition of done met.                                           |
+| `0.9.0` | P9            | §25 audit; Bun/Deno + consumer smoke; STABILITY, SECURITY, RELEASE; REL-11a–11q; verify:pre1.                   |
+| `1.0.0` | §25 + publish | npm publish; §9/§6.3 API frozen under semver; Definition of done met (no new implementation).                   |
 
 ### 26.3 Definition of "functional 1.0.0"
 

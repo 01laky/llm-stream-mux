@@ -1,6 +1,6 @@
 {
 	"name": "llm-stream-mux",
-	"version": "0.8.0",
+	"version": "0.9.0",
 	"description": "Zero-dependency TypeScript stream orchestration for LLM pipelines — race, fallback, merge, and tee over any AsyncIterable or ReadableStream, generic over T.",
 	"license": "MIT",
 	"author": "Ladislav Kostolny <01laky@gmail.com>",
@@ -32,6 +32,8 @@
 		"test": "vitest run",
 		"test:watch": "vitest",
 		"smoke:package": "node scripts/smoke-package.mjs",
+		"smoke:runtimes": "node scripts/smoke-runtimes.mjs",
+		"smoke:consumer": "node scripts/smoke-consumer.mjs",
 		"diagrams:build": "node scripts/build-diagrams.mjs",
 		"diagrams:check": "node scripts/check-diagrams.mjs",
 		"verify:deps": "node scripts/verify-zero-deps.mjs",
@@ -42,6 +44,7 @@
 		"format": "prettier --check .",
 		"format:fix": "prettier --write .",
 		"verify": "pnpm verify:deps && pnpm verify:portability && pnpm lint && pnpm typecheck && pnpm build && pnpm typecheck:examples && pnpm test && pnpm smoke:package && pnpm verify:docs && pnpm diagrams:check && pnpm format",
+		"verify:pre1": "pnpm verify && pnpm release:prep && pnpm smoke:runtimes --skip-optional && pnpm smoke:consumer",
 		"release:prep": "node scripts/release-prep.mjs"
 	},
 	"keywords": [
@@ -72,6 +75,9 @@
 		"url": "https://github.com/01laky/llm-stream-mux/issues"
 	},
 	"homepage": "https://github.com/01laky/llm-stream-mux#readme",
+	"publishConfig": {
+		"access": "public"
+	},
 	"packageManager": "pnpm@9.15.9",
 	"devDependencies": {
 		"@eslint/js": "^9.28.0",

@@ -3,6 +3,39 @@
 All notable changes to this project are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/); versioning follows [Semantic Versioning](https://semver.org/).
 
+## [0.9.0]
+
+### Added
+
+- **`docs/STABILITY.md`** — intended stable API surface, semver policy, npm provenance checklist (API not frozen until `1.0.0`)
+- **`SECURITY.md`** — coordinated disclosure + zero-deps audit policy
+- **`docs/RELEASE.md`** — GitHub release draft templates for `v0.9.0` and `v1.0.0`
+- **`scripts/smoke-runtimes.mjs`** + **`pnpm smoke:runtimes`** — Node/Bun/Deno tarball import smoke (`--ci` / `--skip-optional`)
+- **`scripts/smoke-consumer.mjs`** + **`pnpm smoke:consumer`** — downstream ESM + CJS tarball consumer smoke
+- **`scripts/bench-smoke.mjs`** — advisory micro bench (soft gate in `release-prep --full`)
+- **`examples/workers-smoke/`** — Workers-compatible import fixture
+- **`.github/workflows/smoke-runtimes.yml`** — CI Bun + Deno gate
+- **`pnpm verify:pre1`** — maintainer alias before tag
+- **`docs/img/release-pipeline.mmd`** — verify / pre1 / full release diagram
+- **`LSM-REL-11a`–`11q`** — §25 Definition of done + extended audit gates
+- **`LSM-EDGE-120`–`139`** — P9 §G deep matrix (triple throw, tee n=4, concurrency break, interop round-trip)
+
+### Changed
+
+- **`scripts/release-prep.mjs`** — STABILITY, SECURITY, RELEASE, workers fixture gates; **`--full`** runs smoke-runtimes, smoke-consumer, bench-smoke
+- **`scripts/verify-docs.mjs`** — requires STABILITY, SECURITY, RELEASE, smoke scripts, workers fixture
+- **`docs/edge-cases.md`** — §E cancel-honesty cross-refs (no longer “planned”)
+- **`docs/proposal.MD` §13** — **D14**; §26.2 **`0.9.0`** row
+- **`CONTRIBUTING.md`**, **`README.md`**, **`docs/faq.md`**, **`docs/compatibility.md`**, **`docs/testing-strategy.md`**, **`docs/performance.md`**
+- **`package.json`** — **`publishConfig.access`**, **`0.9.0`**, **`verify:pre1`**, **`smoke:consumer`**
+- **`src/index.ts`** — `MUX_PKG_VERSION` → **`0.9.0`**
+
+### Notes
+
+- **883** tests green; **public API unchanged** vs **`0.8.0`** (pre-stable RC)
+- **`LSM-REL-10f`** / **`LSM-REL-11l`** edge matrix authority extended to **`LSM-EDGE-139`**
+- **`1.0.0`** deferred — npm publish + explicit §9/§6.3 freeze per **`docs/STABILITY.md`**
+
 ## [0.8.0]
 
 ### Added

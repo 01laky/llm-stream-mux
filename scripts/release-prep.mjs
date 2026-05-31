@@ -33,8 +33,9 @@ if (!existsSync(join(rootDir, "package.json"))) {
 const pkg = JSON.parse(read("package.json"));
 const version = pkg.version;
 const tag = `v${version}`;
+const full = process.argv.includes("--full");
 
-console.log(`Release prep for llm-stream-mux@${version}\n`);
+console.log(`Release prep for llm-stream-mux@${version}${full ? " (--full)" : ""}\n`);
 
 if (!existsSync(join(rootDir, "CHANGELOG.md"))) {
 	errors.push("Missing CHANGELOG.md");
@@ -139,6 +140,88 @@ try {
 	rmSync(temp, { recursive: true, force: true });
 }
 
+if (!existsSync(join(rootDir, "docs/STABILITY.md"))) {
+	errors.push("Missing docs/STABILITY.md");
+} else {
+	const stability = read("docs/STABILITY.md");
+	if (!stability.includes("1.0.0")) {
+		errors.push("docs/STABILITY.md should reference 1.0.0 freeze/handoff");
+	} else {
+		ok("docs/STABILITY.md present");
+	}
+}
+
+if (!existsSync(join(rootDir, "scripts/smoke-runtimes.mjs"))) {
+	errors.push("Missing scripts/smoke-runtimes.mjs");
+} else {
+	ok("scripts/smoke-runtimes.mjs present");
+}
+
+if (!existsSync(join(rootDir, "scripts/smoke-consumer.mjs"))) {
+	errors.push("Missing scripts/smoke-consumer.mjs");
+} else {
+	ok("scripts/smoke-consumer.mjs present");
+}
+
+if (!existsSync(join(rootDir, "SECURITY.md"))) {
+	errors.push("Missing SECURITY.md");
+} else {
+	ok("SECURITY.md present");
+}
+
+if (!existsSync(join(rootDir, "docs/RELEASE.md"))) {
+	errors.push("Missing docs/RELEASE.md");
+} else {
+	ok("docs/RELEASE.md present");
+}
+
+if (!existsSync(join(rootDir, "examples/workers-smoke/README.md"))) {
+	errors.push("Missing examples/workers-smoke/README.md");
+} else {
+	ok("examples/workers-smoke fixture present");
+}
+
+if (pkg.private === true) {
+	errors.push("package.json must not set private: true for publish");
+} else {
+	ok("package.json not private");
+}
+
+for (const field of ["license", "repository", "exports", "files", "engines"]) {
+	if (pkg[field] === undefined) {
+		errors.push(`package.json missing ${field}`);
+	} else {
+		ok(`package.json has ${field}`);
+	}
+}
+
+if (pkg.publishConfig?.access !== "public") {
+	errors.push("package.json must set publishConfig.access to public");
+} else {
+	ok("publishConfig.access is public");
+}
+
+if (full) {
+	try {
+		run("node", ["scripts/smoke-runtimes.mjs", "--ci"], { stdio: "pipe" });
+		ok("smoke-runtimes --ci passed");
+	} catch {
+		errors.push("smoke-runtimes --ci failed");
+	}
+	try {
+		run("node", ["scripts/smoke-consumer.mjs"], { stdio: "pipe" });
+		ok("smoke-consumer passed");
+	} catch {
+		errors.push("smoke-consumer failed");
+	}
+	try {
+		run("node", ["scripts/bench-smoke.mjs", "--warn"], { stdio: "inherit" });
+		ok("bench-smoke --warn completed");
+	} catch {
+		errors.push("bench-smoke failed");
+	}
+}
+
 if (errors.length > 0) {
 	console.error("\nRelease prep FAILED:");
 	for (const e of errors) console.error(`  - ${e}`);
@@ -149,5 +232,7 @@ console.log(`
 Next steps (manual):
   git tag ${tag}
   git push origin ${tag}
-  npm publish --access public   # at 1.0.0 when API is frozen
+  # Optional pre-release: mark GitHub pre-release for ${version}
+  # At 1.0.0 only: follow docs/STABILITY.md + docs/RELEASE.md
+  npm publish --provenance --access public
 `);

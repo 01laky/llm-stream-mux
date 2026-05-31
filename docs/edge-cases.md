@@ -1,6 +1,6 @@
 # Edge-case showcase
 
-**Status:** Contract matrix — P7 (`0.7.0`) + P8 docs (`0.8.0`) — **`LSM-EDGE-01`–`119`** + **`06b`** + **`LSM-REL-09`/`10`** in `test/edge.test.ts` / `test/release.test.ts`.
+**Status:** Contract matrix — P7 (`0.7.0`) + P8 (`0.8.0`) + P9 (`0.9.0`) — **`LSM-EDGE-01`–`139`** + **`06b`** + **`LSM-REL-09`/`10`/`11`** in `test/edge.test.ts` / `test/release.test.ts` (**883** tests total).
 
 What breaks when you hand-roll stream orchestration, and how `llm-stream-mux` pins behavior. For positioning vs generic utilities, see [comparison](./comparison.md).
 
@@ -52,7 +52,7 @@ Calling `return()` on an async iterator does not guarantee the underlying HTTP r
 
 **What mux does:** documents cancellation honesty (§7.5); recommends `ReadableStream` sources when hard cancel matters; losers get `MuxCancelled` reason objects.
 
-**Tests (planned):** `LSM-CORE-05`–`07`, `LSM-CORE-23` (P1); full strategy cancel in P2+.
+**Tests:** `LSM-CORE-05`–`07`, `LSM-CORE-23`, `LSM-CORE-31`–`32`, `LSM-CORE-36`, `LSM-CORE-53`; strategy cancel in `LSM-RACE-*`, `LSM-FB-*`, `LSM-TEE-*`, `LSM-EDGE-16`–`19`, `LSM-EDGE-46`–`50`, `LSM-EDGE-72`–`73`.
 
 ---
 
@@ -136,6 +136,15 @@ Diagram: [edge-matrix.svg](./img/edge-matrix.svg)
 | **`LSM-EDGE-113`–`115`** | Race break + lazy open audit, fallback `buffered` no primary leak, ensemble labeled parity (lazy)                  |
 | **`LSM-EDGE-116`–`118`** | ReadableStream byte `isUsable`, commit no failover event, merge concurrency slot audit on break                    |
 | **`LSM-EDGE-119`**       | Matrix doc integrity guard for §F IDs                                                                              |
+
+### G.4 Ultra-extended §G P9 deep matrix (`LSM-EDGE-120`–`139`)
+
+| Range                    | Scope                                                                                                                                  |
+| ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------- |
+| **`LSM-EDGE-120`–`125`** | Multi-throw `ALL_FAILED`, merge stream `error()`, `mapEach` throw, tee `n=4`, Record winner, mid-stream abort                          |
+| **`LSM-EDGE-126`–`131`** | Merge multi-error tags, buffered+junk `isUsable`, triple lazy break audit, `onSourceEvent` error, RS winner cancel                     |
+| **`LSM-EDGE-132`–`137`** | Double `return`, tee partial cancel, merge concurrency break audit, post-emit partial+backup, `isFinal`×`isUsable`, interop round-trip |
+| **`LSM-EDGE-138`–`139`** | `toReadable` race round-trip, ensemble labeled parity, §G doc integrity guard                                                          |
 
 Race cross-refs: `LSM-RACE-05`, `LSM-RACE-09`, `LSM-RACE-19`, `LSM-RACE-28`, `LSM-RACE-43`, `LSM-RACE-57`, `LSM-RACE-62`–`74`, `LSM-RACE-80`.
 

@@ -1,10 +1,10 @@
 import { execFileSync } from "node:child_process";
-import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
-import { MUX_PKG_VERSION } from "../src/index.js";
+import { MUX_ERROR_CODES, MUX_PKG_VERSION } from "../src/index.js";
 
 const root = resolve(fileURLToPath(new URL("..", import.meta.url)));
 
@@ -16,8 +16,68 @@ function readPkg() {
 		version: string;
 		dependencies?: Record<string, string>;
 		exports?: Record<string, { import?: string; require?: string; types?: string }>;
+		license?: string;
+		repository?: unknown;
+		files?: string[];
+		private?: boolean;
+		publishConfig?: { access?: string };
+		engines?: { node?: string };
 	};
 }
+
+const PUBLIC_RUNTIME_EXPORTS = [
+	"race",
+	"fallback",
+	"merge",
+	"ensemble",
+	"tee",
+	"collect",
+	"toReadable",
+	"toAsyncIterable",
+	"MUX_PKG_VERSION",
+	"MUX_ERROR_CODES",
+] as const;
+
+const PUBLIC_TYPE_EXPORTS = [
+	"Source",
+	"Sources",
+	"Tagged",
+	"MuxError",
+	"MuxErrorCode",
+	"MuxErrorInit",
+	"CreateMuxError",
+	"SourceEvent",
+	"SourceEventType",
+	"MuxResult",
+	"MuxSourceStats",
+	"MuxStrategy",
+	"FailoverPolicy",
+	"TeeBackpressure",
+	"MergeOrder",
+	"CommonOptions",
+	"RaceOptions",
+	"FallbackOptions",
+	"MergeOptions",
+	"TeeOptions",
+	"RaceFn",
+	"FallbackFn",
+	"MergeFn",
+	"TeeFn",
+	"CollectFn",
+	"ToReadableFn",
+	"ToAsyncIterableFn",
+	"MuxCancelled",
+	"MuxCancelledReason",
+] as const;
+
+const MUX_ERROR_CODE_SET = [
+	"SOURCE_ERROR",
+	"IN_BAND_ERROR",
+	"ALL_FAILED",
+	"ABORTED",
+	"TIMEOUT",
+	"NO_USABLE_SOURCE",
+] as const;
 
 function exportPath(relative: string) {
 	return join(root, relative.replace(/^\.\//, ""));
@@ -368,11 +428,11 @@ const { merge, ensemble, collect } = require("llm-stream-mux");
 });
 
 describe("LSM-REL-08 cross-cutting dist contract", () => {
-	it("LSM-REL-08a d.ts CommonOptions fields and MUX_PKG_VERSION 0.8.0", () => {
+	it("LSM-REL-08a d.ts CommonOptions fields and MUX_PKG_VERSION 0.9.0", () => {
 		const dts = readFileSync(join(root, "dist/index.d.ts"), "utf8");
 		expectCommonOptionsInDts(dts);
-		expect(MUX_PKG_VERSION).toBe("0.8.0");
-		expect(readPkg().version).toBe("0.8.0");
+		expect(MUX_PKG_VERSION).toBe("0.9.0");
+		expect(readPkg().version).toBe("0.9.0");
 	});
 
 	it(
@@ -419,13 +479,13 @@ await mergeIter.return();`,
 });
 
 describe("LSM-REL-09 edge matrix dist contract", () => {
-	it("LSM-REL-09a MUX_PKG_VERSION 0.8.0 and edge.test.ts exists on disk", () => {
-		expect(MUX_PKG_VERSION).toBe("0.8.0");
-		expect(readPkg().version).toBe("0.8.0");
+	it("LSM-REL-09a MUX_PKG_VERSION 0.9.0 and edge.test.ts exists on disk", () => {
+		expect(MUX_PKG_VERSION).toBe("0.9.0");
+		expect(readPkg().version).toBe("0.9.0");
 		expect(existsSync(join(root, "test/edge.test.ts"))).toBe(true);
 		const edgeSrc = readFileSync(join(root, "test/edge.test.ts"), "utf8");
 		expect(edgeSrc).toContain("LSM-EDGE-01");
-		expect(edgeSrc).toContain("LSM-EDGE-59");
+		expect(edgeSrc).toContain("LSM-EDGE-119");
 	});
 
 	it(
@@ -525,8 +585,8 @@ describe("LSM-REL-10 P8 examples and pack contract", () => {
 	});
 
 	it("LSM-REL-10c release prep script passes", () => {
-		expect(MUX_PKG_VERSION).toBe("0.8.0");
-		expect(readPkg().version).toBe("0.8.0");
+		expect(MUX_PKG_VERSION).toBe("0.9.0");
+		expect(readPkg().version).toBe("0.9.0");
 		execFileSync("node", ["scripts/release-prep.mjs"], { cwd: root, stdio: "pipe" });
 	});
 
@@ -601,13 +661,189 @@ if (out.length !== 1 || out[0][0] !== 42) throw new Error("race smoke");`,
 		}
 	});
 
-	it("LSM-REL-10f edge matrix authority file intact LSM-EDGE-01 through 119", () => {
+	it("LSM-REL-10f edge matrix authority file intact LSM-EDGE-01 through 139", () => {
 		const edgeSrc = readFileSync(join(root, "test/edge.test.ts"), "utf8");
 		expect(edgeSrc).toContain("LSM-EDGE-01");
-		expect(edgeSrc).toContain("LSM-EDGE-119");
-		expect(edgeSrc).toContain("LSM-EDGE ultra-extended §E");
+		expect(edgeSrc).toContain("LSM-EDGE-139");
+		expect(edgeSrc).toContain("LSM-EDGE ultra-extended §G");
 		expect(edgeSrc).toContain("LSM-EDGE ultra-extended §F");
 		const matches = edgeSrc.match(/it\("LSM-EDGE-/g);
-		expect(matches?.length).toBeGreaterThanOrEqual(119);
+		expect(matches?.length).toBeGreaterThanOrEqual(139);
+	});
+});
+
+describe("LSM-REL-11 P9 pre-1.0 §25 audit contract", () => {
+	it("LSM-REL-11a dist index.d.ts export surface matches §9 allowlist", () => {
+		const dts = readFileSync(join(root, "dist/index.d.ts"), "utf8");
+		for (const name of ["muxError", "fromAsyncIterable"]) {
+			expect(dts).not.toMatch(new RegExp(`export declare (const|function|var) ${name}\\b`));
+		}
+		for (const name of PUBLIC_RUNTIME_EXPORTS) {
+			expect(dts).toContain(name);
+		}
+		for (const name of PUBLIC_TYPE_EXPORTS) {
+			expect(dts).toContain(name);
+		}
+	});
+
+	it("LSM-REL-11b MUX_ERROR_CODES length six matches §6.3 set", () => {
+		expect(MUX_ERROR_CODES).toHaveLength(MUX_ERROR_CODE_SET.length);
+		for (const code of MUX_ERROR_CODE_SET) {
+			expect(MUX_ERROR_CODES).toContain(code);
+		}
+	});
+
+	it("LSM-REL-11c release prep script passes at 0.9.0", () => {
+		expect(readPkg().version).toBe("0.9.0");
+		execFileSync("node", ["scripts/release-prep.mjs"], { cwd: root, stdio: "pipe" });
+	});
+
+	it(
+		"LSM-REL-11d smoke-runtimes Node baseline passes skip-optional",
+		() => {
+			execFileSync("node", ["scripts/smoke-runtimes.mjs", "--skip-optional"], {
+				cwd: root,
+				stdio: "pipe",
+				timeout: TARBALL_SMOKE_MS,
+			});
+		},
+		TARBALL_SMOKE_MS,
+	);
+
+	it("LSM-REL-11e STABILITY.md exists and references §9 not frozen until 1.0.0", () => {
+		const stability = readFileSync(join(root, "docs/STABILITY.md"), "utf8");
+		expect(stability).toContain("not semver-frozen until `1.0.0`");
+		expect(stability).toContain("MUX_PKG_VERSION");
+		expect(stability).toContain("CreateMuxError");
+	});
+
+	it("LSM-REL-11f verify-docs requires STABILITY SECURITY RELEASE smoke scripts workers fixture", () => {
+		const verifyDocs = readFileSync(join(root, "scripts/verify-docs.mjs"), "utf8");
+		for (const token of [
+			"docs/STABILITY.md",
+			"SECURITY.md",
+			"docs/RELEASE.md",
+			"scripts/smoke-runtimes.mjs",
+			"scripts/smoke-consumer.mjs",
+			"examples/workers-smoke/README.md",
+			"smoke-runtimes.yml",
+		]) {
+			expect(verifyDocs).toContain(token);
+		}
+	});
+
+	it("LSM-REL-11h src has no assemble or guard imports", () => {
+		const walk = (dir: string): string[] => {
+			const entries = readdirSync(dir, { withFileTypes: true });
+			const files: string[] = [];
+			for (const entry of entries) {
+				const path = join(dir, entry.name);
+				if (entry.isDirectory()) files.push(...walk(path));
+				else if (entry.name.endsWith(".ts")) files.push(path);
+			}
+			return files;
+		};
+		for (const file of walk(join(root, "src"))) {
+			const body = readFileSync(file, "utf8");
+			expect(body).not.toMatch(/llm-stream-assemble|llm-stream-guard/);
+		}
+	});
+
+	it("LSM-REL-11i CHANGELOG 0.9.0 section exists", () => {
+		const changelog = readFileSync(join(root, "CHANGELOG.md"), "utf8");
+		expect(changelog).toContain("## [0.9.0]");
+	});
+
+	it("LSM-REL-11j proposal contains D14 and 0.9.0 ladder row", () => {
+		const proposal = readFileSync(join(root, "docs/proposal.MD"), "utf8");
+		expect(proposal).toContain("D14");
+		expect(proposal).toContain("0.9.0");
+	});
+
+	it("LSM-REL-11k MUX_PKG_VERSION and package.json pinned 0.9.0", () => {
+		expect(MUX_PKG_VERSION).toBe("0.9.0");
+		expect(readPkg().version).toBe("0.9.0");
+		const dts = readFileSync(join(root, "dist/index.d.ts"), "utf8");
+		expect(dts).not.toContain('MUX_PKG_VERSION: "0.8.0"');
+	});
+
+	it("LSM-REL-11l edge matrix authority LSM-EDGE-139 unchanged", () => {
+		const edgeSrc = readFileSync(join(root, "test/edge.test.ts"), "utf8");
+		expect(edgeSrc).toContain("LSM-EDGE-139");
+		expect(edgeSrc).toContain("LSM-EDGE ultra-extended §G");
+	});
+
+	it("LSM-REL-11m package.json publish readiness fields present", () => {
+		const pkg = readPkg();
+		expect(pkg.license).toBeTruthy();
+		expect(pkg.repository).toBeTruthy();
+		expect(pkg.exports?.["."]).toBeTruthy();
+		expect(pkg.files).toContain("dist");
+		expect(pkg.private).not.toBe(true);
+		expect(pkg.engines?.node).toContain("18");
+		expect(pkg.publishConfig?.access).toBe("public");
+	});
+
+	it("LSM-REL-11n verify-docs §25 doc set includes STABILITY", () => {
+		execFileSync("node", ["scripts/verify-docs.mjs"], { cwd: root, stdio: "pipe" });
+		expect(existsSync(join(root, "docs/STABILITY.md"))).toBe(true);
+	});
+
+	it("LSM-REL-11o semver drift gate no stale user-facing version pins", () => {
+		const version = readPkg().version;
+		expect(MUX_PKG_VERSION).toBe(version);
+		const dts = readFileSync(join(root, "dist/index.d.ts"), "utf8");
+		expect(dts).not.toContain('MUX_PKG_VERSION: "0.8.0"');
+		const userFacing = [
+			"README.md",
+			"CONTRIBUTING.md",
+			"docs/testing-strategy.md",
+			"docs/faq.md",
+			"docs/compatibility.md",
+			"docs/STABILITY.md",
+			"docs/RELEASE.md",
+		];
+		for (const rel of userFacing) {
+			const body = readFileSync(join(root, rel), "utf8");
+			expect(body).toContain(version);
+			expect(body).not.toMatch(/badge\/version-0\.8\.0/);
+		}
+		const changelog = readFileSync(join(root, "CHANGELOG.md"), "utf8");
+		const section = changelog.split(`## [${version}]`)[1]?.split(/^## \[/m)[0] ?? "";
+		expect(section.length).toBeGreaterThan(20);
+		expect(section).not.toMatch(/MUX_PKG_VERSION.*0\.8\.0/);
+	});
+
+	it("LSM-REL-11p package.json exports and files snapshot matches publish shape", () => {
+		const pkg = readPkg();
+		expect([...(pkg.files ?? [])].sort()).toEqual(["LICENSE", "README.md", "dist"]);
+		expect(pkg.exports).toEqual({
+			".": {
+				types: "./dist/index.d.ts",
+				import: "./dist/index.js",
+				require: "./dist/index.cjs",
+			},
+		});
+	});
+
+	it("LSM-REL-11q CHANGELOG 0.9.0 LSM ID references exist in test files", () => {
+		const changelog = readFileSync(join(root, "CHANGELOG.md"), "utf8");
+		const section = changelog.split("## [0.9.0]")[1]?.split(/^## \[/m)[0] ?? "";
+		const ids = [...new Set([...section.matchAll(/LSM-[A-Z]+-\d+[a-z]?/g)].map((m) => m[0]))];
+		expect(ids.length).toBeGreaterThan(0);
+		const testDir = join(root, "test");
+		const walk = (dir: string): string => {
+			let body = "";
+			for (const entry of readdirSync(dir, { withFileTypes: true })) {
+				const path = join(dir, entry.name);
+				if (entry.isDirectory()) body += walk(path);
+				else if (entry.name.endsWith(".ts")) body += readFileSync(path, "utf8");
+			}
+			return body;
+		};
+		const testSrc = walk(testDir);
+		for (const id of ids) {
+			expect(testSrc, `missing test reference for ${id}`).toContain(id);
+		}
 	});
 });

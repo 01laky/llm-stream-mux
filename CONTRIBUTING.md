@@ -12,13 +12,14 @@ For ecosystem context (no npm coupling): [`docs/integration-cookbook.md`](./docs
 
 ## Version ladder
 
-| Version     | Phase | Milestone                                   |
-| ----------- | ----- | ------------------------------------------- |
-| **`0.7.0`** | P7    | §23 edge-case matrix (`LSM-EDGE-*`)         |
-| **`0.8.0`** | P8    | Docs, examples, cookbook, `release:prep`    |
-| **`1.0.0`** | §25   | npm publish + explicit §9 / §6.3 API freeze |
+| Version     | Phase | Milestone                                                               |
+| ----------- | ----- | ----------------------------------------------------------------------- |
+| **`0.7.0`** | P7    | §23 edge-case matrix (`LSM-EDGE-*`)                                     |
+| **`0.8.0`** | P8    | Docs, examples, cookbook, `release:prep`                                |
+| **`0.9.0`** | P9    | §25 audit, Bun/Deno smoke, consumer smoke, STABILITY, SECURITY, RELEASE |
+| **`1.0.0`** | §25   | npm publish + explicit §9 / §6.3 API freeze                             |
 
-Before tagging a release: **`pnpm verify`** green, then **`pnpm release:prep`**.
+Before tagging a release: **`pnpm verify:pre1`** green (or **`pnpm verify`** + **`pnpm release:prep`** minimum).
 
 ## Requirements
 

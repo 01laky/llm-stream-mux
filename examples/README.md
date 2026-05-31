@@ -1,6 +1,6 @@
 # Examples
 
-**Status:** P8 (`0.8.0`) — runnable **`node-fetch`** samples with fake streams (no live HTTP in CI).
+**Status:** P8 (`0.8.0`) + P9 Workers fixture — runnable **`node-fetch`** samples and **`workers-smoke/`**.
 
 Small TypeScript programs using the public **`llm-stream-mux`** API. Production: replace fakes with **`fetch(url, { signal }).body!`**.
 
@@ -16,6 +16,7 @@ Diagrams: [pipeline](../docs/img/pipeline.svg) · [quick-decision](../docs/img/q
 | Primary → backup failover    | [node-fetch/fallback.ts](./node-fetch/fallback.ts)      |
 | Multi-model merge with tags  | [node-fetch/merge.ts](./node-fetch/merge.ts)            |
 | Client + logger fan-out      | [node-fetch/tee.ts](./node-fetch/tee.ts)                |
+| Workers import smoke fixture | [workers-smoke/](./workers-smoke/README.md)             |
 | Race bytes → assemble winner | [integration-cookbook](../docs/integration-cookbook.md) |
 
 Shared fakes: [node-fetch/\_fake.ts](./node-fetch/_fake.ts)

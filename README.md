@@ -1,9 +1,9 @@
 # llm-stream-mux
 
-![version](https://img.shields.io/badge/version-0.8.0-lightgrey)
+![version](https://img.shields.io/badge/version-0.9.0-lightgrey)
 ![node](https://img.shields.io/badge/node-%3E%3D18-339933)
 ![runtime deps](https://img.shields.io/badge/runtime_deps-0-brightgreen)
-![status](https://img.shields.io/badge/status-P8_docs-green)
+![status](https://img.shields.io/badge/status-pre__stable-yellow)
 [![ci](https://github.com/01laky/llm-stream-mux/actions/workflows/ci.yml/badge.svg)](https://github.com/01laky/llm-stream-mux/actions/workflows/ci.yml)
 
 **Race, fallback, merge, and tee over any stream** — generic over `T`, zero runtime dependencies, Web Streams throughout.
@@ -12,7 +12,7 @@
 
 Orchestrate streams — **not another hand-rolled `Promise.race` on fetch**.
 
-**Status:** `0.8.0` — P0–P8: core internals, interop helpers, **`tee`**, **`race`**, **`fallback`**, **`merge`/`ensemble`**, cross-cutting **`CommonOptions`**, **§23 edge-case matrix** (`LSM-EDGE-*`), and **runnable examples**. Spec: [`docs/proposal.MD`](./docs/proposal.MD).
+**Status:** `0.9.0` — P0–P9: feature-complete per §9, **§25 audit** green, Bun/Deno smoke in CI. **Not on npm until `1.0.0`.** Spec: [`docs/proposal.MD`](./docs/proposal.MD) · stability: [`docs/STABILITY.md`](./docs/STABILITY.md) · security: [`SECURITY.md`](./SECURITY.md)
 
 ---
 
@@ -88,10 +88,17 @@ Walkthrough: [docs/edge-cases.md](./docs/edge-cases.md).
 
 ## Install
 
+**npm registry:** after **`1.0.0`** — `pnpm add llm-stream-mux`
+
+**Until then:**
+
 ```bash
-pnpm add llm-stream-mux@0.8.0
-# pre-1.0 semver — API feature-complete per §9; freeze at 1.0.0
+git clone https://github.com/01laky/llm-stream-mux.git
+cd llm-stream-mux && pnpm install && pnpm build
+# or: npm pack && npm install ./llm-stream-mux-0.9.0.tgz
 ```
+
+Pre-stable RC **`0.9.0`** — API feature-complete per §9; semver freeze at **`1.0.0`** ([STABILITY](./docs/STABILITY.md)).
 
 **Requirements:** Node.js 18+ · see [compatibility matrix](./docs/compatibility.md).
 
@@ -161,7 +168,10 @@ Full API: [proposal §9](./docs/proposal.MD#9-public-api-final-shape).
 
 ## Documentation
 
-- [Proposal & roadmap](./docs/proposal.MD) — normative spec + P0–P8
+- [Proposal & roadmap](./docs/proposal.MD) — normative spec + P0–P9
+- [API stability (pre-1.0)](./docs/STABILITY.md)
+- [Security policy](./SECURITY.md)
+- [Release templates](./docs/RELEASE.md)
 - [Usage guides](./docs/usage-guides.md) — per-strategy recipes
 - [Integration cookbook](./docs/integration-cookbook.md) — pair with assemble/guard (docs only)
 - [Edge-case contracts](./docs/edge-cases.md)
@@ -198,7 +208,7 @@ pnpm install
 pnpm verify
 ```
 
-CI runs `pnpm verify` on Node **18, 20, and 22**.
+CI runs `pnpm verify` on Node **18, 20, and 22**; [`smoke-runtimes.yml`](./.github/workflows/smoke-runtimes.yml) smoke-tests Bun + Deno.
 
 | Command                   | Description                                                                                                                                                  |
 | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -207,6 +217,9 @@ CI runs `pnpm verify` on Node **18, 20, and 22**.
 | `pnpm test`               | Vitest — `LSM-REL-*`, `LSM-TYP-*`, `LSM-CORE-*`, `LSM-TEE-*`, `LSM-RACE-*`, `LSM-FB-*`, `LSM-MERGE-*`, `LSM-X-*`, `LSM-EDGE-*`, `LSM-EDGE-P0-*`, `LSM-SRC-*` |
 | `pnpm verify:portability` | forbid Node-only / ReadableStream.from patterns in `src/`                                                                                                    |
 | `pnpm smoke:package`      | ESM/CJS import from `npm pack` tarball                                                                                                                       |
+| `pnpm smoke:runtimes`     | Node (+ optional Bun/Deno) tarball smoke — `--skip-optional` locally, `--ci` in Actions                                                                      |
+| `pnpm smoke:consumer`     | ESM + CJS downstream consumer smoke from tarball                                                                                                             |
+| `pnpm verify:pre1`        | maintainer gate: verify + release:prep + smoke:runtimes + smoke:consumer                                                                                     |
 | `pnpm verify:deps`        | fail if runtime dependencies added                                                                                                                           |
 | `pnpm diagrams:build`     | render `docs/img/*.mmd` → `.svg`                                                                                                                             |
 | `pnpm diagrams:check`     | SVGs present and newer than `.mmd`                                                                                                                           |

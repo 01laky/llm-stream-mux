@@ -1,6 +1,6 @@
 # Runtime compatibility
 
-**Status:** P8 (`0.8.0`) — **`AbortSignal.timeout`** required when passing **`timeoutMs`** or **`overallTimeoutMs`** (validated at call site; see **`LSM-CORE-65`**).
+**Status:** P9 (`0.9.0`) — **`AbortSignal.timeout`** required when passing **`timeoutMs`** or **`overallTimeoutMs`** (validated at call site; see **`LSM-CORE-65`**).
 
 `llm-stream-mux` is runtime-agnostic via **Web Streams** and `AbortController`. No Node-only APIs in `src/`.
 
@@ -8,12 +8,12 @@
 
 ## Supported runtimes
 
-| Runtime            | Support        | Notes                                                                    |
-| ------------------ | -------------- | ------------------------------------------------------------------------ |
-| Node.js 18+        | **Primary CI** | LTS 18, 20, 22 in GitHub Actions                                         |
-| Bun                | Expected       | Web Streams globals                                                      |
-| Deno               | Expected       | No `node:stream/web` imports                                             |
-| Cloudflare Workers | Expected       | `ReadableStream.getReader()` only — no `Symbol.asyncIterator` on streams |
+| Runtime            | Support        | Notes                                                                                                 |
+| ------------------ | -------------- | ----------------------------------------------------------------------------------------------------- |
+| Node.js 18+        | **Primary CI** | LTS 18, 20, 22 in GitHub Actions                                                                      |
+| Bun                | Smoke-tested   | CI `smoke-runtimes.yml`; Web Streams globals                                                          |
+| Deno               | Smoke-tested   | CI `smoke-runtimes.yml`; no `node:stream/web` imports                                                 |
+| Cloudflare Workers | Expected       | Fixture [`examples/workers-smoke/`](../examples/workers-smoke/README.md); manual `workerd` / Wrangler |
 
 ---
 
@@ -43,7 +43,9 @@ Recommendation: supply `ReadableStream` when loser cancellation must abort HTTP 
 
 ## CI matrix
 
-GitHub Actions runs **`pnpm verify`** on Node **18, 20, and 22** (includes **`typecheck:examples`** and **`LSM-REL-10*`** after P8).
+GitHub Actions runs **`pnpm verify`** on Node **18, 20, and 22** (includes **`typecheck:examples`** and **`LSM-REL-10*`** / **`LSM-REL-11*`**).
+
+**[`smoke-runtimes.yml`](../.github/workflows/smoke-runtimes.yml)** — Bun + Deno tarball import smoke after `pnpm build`.
 
 ---
 

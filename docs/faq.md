@@ -1,6 +1,6 @@
 # FAQ
 
-**Status:** P8 (`0.8.0`) — docs, examples, and release prep complete; **`1.0.0`** = npm publish + API freeze.
+**Status:** P9 (`0.9.0`) — §25 audit, Bun/Deno smoke, `STABILITY.md`; **`1.0.0`** = npm publish + API freeze.
 
 ---
 
@@ -40,9 +40,23 @@ No (D9). Async transforms belong in userland (`TransformStream`, manual loops). 
 
 ---
 
+## What is 0.9.0 vs 1.0.0?
+
+**`0.9.0`** (P9) — pre-stable RC: §25 Definition of done automated (`LSM-REL-11a`–`11q`), multi-runtime smoke, consumer smoke, [`STABILITY.md`](./STABILITY.md), [`SECURITY.md`](../SECURITY.md). **Public API unchanged vs 0.8.0**; not semver-frozen yet.
+
+**`1.0.0`** — first npm publish + maintainer declares §9 / §6.3 frozen under semver. See [`STABILITY.md`](./STABILITY.md) and [`RELEASE.md`](./RELEASE.md).
+
+---
+
+## What is `pnpm verify:pre1`?
+
+Maintainer gate before tagging: runs **`pnpm verify`**, then **`release:prep`**, **`smoke:runtimes --skip-optional`**, and **`smoke:consumer`**. Does not require Bun/Deno locally. CI still runs **`smoke:runtimes --ci`** separately.
+
+---
+
 ## When is 1.0.0?
 
-**`0.8.0`** (P8) ships docs, examples, cookbook, and **`release:prep`**. **`1.0.0`** is tagged when §25 Definition of done is audited, **`pnpm verify`** is green, and the maintainer **explicitly declares §9 / §6.3 API frozen** for npm publish. See proposal **D13** and §26.2.
+When §25 is audited, CI is green, and the maintainer publishes to npm and updates STABILITY to “frozen”. **`0.9.0`** completes engineering prep; **`1.0.0`** is ceremony only. See proposal **D13**, **D14**, and §26.2.
 
 ---
 

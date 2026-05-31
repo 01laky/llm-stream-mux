@@ -17,6 +17,7 @@ const diagrams = [
 	"race-win.mmd",
 	"fallback-failover.mmd",
 	"edge-matrix.mmd",
+	"release-pipeline.mmd",
 ];
 
 const errors = [];

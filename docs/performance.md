@@ -1,6 +1,6 @@
 # Performance & runtime behavior
 
-**Status:** Pre-implementation — design constraints from proposal §7.7 and §8.
+**Status:** P9 (`0.9.0`) — design constraints from proposal §7.7 and §8; advisory bench in `scripts/bench-smoke.mjs`.
 
 ---
 
@@ -35,7 +35,15 @@ Hard cancel (`ReadableStream`) aborts HTTP. Soft cancel (`AsyncIterable`) may le
 
 ## Benchmarks
 
-No published benchmarks pre-1.0. A smoke bench script may land post-P5 (`scripts/bench-smoke.mjs`, optional).
+**`scripts/bench-smoke.mjs`** — advisory micro bench for `race` / `merge` median latency. Not a CI gate.
+
+```bash
+pnpm build
+node scripts/bench-smoke.mjs          # print medians
+node scripts/bench-smoke.mjs --warn   # warn on regression vs baseline
+```
+
+Baseline: **`scripts/bench-smoke-baseline.json`**. Invoked with **`--warn`** from **`pnpm release:prep --full`**.
 
 ---
 
