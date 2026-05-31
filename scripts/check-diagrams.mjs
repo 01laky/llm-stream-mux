@@ -16,6 +16,7 @@ const diagrams = [
 	"tee-fanout.mmd",
 	"race-win.mmd",
 	"fallback-failover.mmd",
+	"edge-matrix.mmd",
 ];
 
 const errors = [];

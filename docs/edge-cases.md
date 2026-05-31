@@ -1,6 +1,6 @@
 # Edge-case showcase
 
-**Status:** Contract matrix — P6 cross-cutting pins in **`LSM-X-*`**; full behavioral matrix in P7 (`LSM-EDGE-*`).
+**Status:** Contract matrix — P7 implemented (`0.7.0`) — **`LSM-EDGE-01`–`99`** + **`LSM-REL-09`** in `test/edge.test.ts`.
 
 What breaks when you hand-roll stream orchestration, and how `llm-stream-mux` pins behavior. For positioning vs generic utilities, see [comparison](./comparison.md).
 
@@ -90,22 +90,44 @@ Diagram: [public-api-types.svg](./img/public-api-types.svg) · [core-internals.s
 
 ---
 
-## G) Contract matrix (binding at P7)
+## G) Contract matrix (binding — P7 `0.7.0`)
 
-| Case                            | race               | fallback                | merge                        | tee            |
-| ------------------------------- | ------------------ | ----------------------- | ---------------------------- | -------------- |
-| empty `sources` (`[]`)          | `NO_USABLE_SOURCE` | `ALL_FAILED` (0 errors) | yields nothing, completes    | n/a            |
-| single source                   | pass-through       | pass-through            | tagged pass-through          | works          |
-| all sources empty               | `NO_USABLE_SOURCE` | `ALL_FAILED`            | all `done`, completes        | branches close |
-| source throws before first item | disqualified       | failover                | `error` tag, others continue | per policy     |
-| consumer breaks early (`break`) | cancel all         | cancel active           | cancel all sources           | branch rules   |
-| `signal` already aborted        | `ABORTED`          | `ABORTED`               | `ABORTED`                    | branches error |
+| Case                            | race               | fallback                | merge                        | tee            | Test ID        |
+| ------------------------------- | ------------------ | ----------------------- | ---------------------------- | -------------- | -------------- |
+| empty `sources` (`[]`)          | `NO_USABLE_SOURCE` | `ALL_FAILED` (0 errors) | yields nothing, completes    | n/a            | `01`/`02`/`03` |
+| single source                   | pass-through       | pass-through            | tagged pass-through          | works          | `04`–`07`      |
+| all sources empty               | `NO_USABLE_SOURCE` | `ALL_FAILED`            | all `done`, completes        | branches close | `08`–`11`      |
+| source throws before first item | disqualified       | failover                | `error` tag, others continue | per policy     | `12`–`15`      |
+| consumer breaks early (`break`) | cancel all         | cancel active           | cancel all sources           | branch rules   | `16`–`19`      |
+| `signal` already aborted        | `ABORTED`          | `ABORTED`               | `ABORTED`                    | branches error | `20`–`23`      |
 
-Race pins: `LSM-RACE-05`, `LSM-RACE-09`, `LSM-RACE-19`, `LSM-RACE-28`, `LSM-RACE-43`, `LSM-RACE-57`, `LSM-RACE-62`–`74`, `LSM-RACE-80`.
+**Row 1 supplements:** empty `Record` `{}` → **`LSM-EDGE-52`** (race), **`LSM-EDGE-53`** (fallback); single empty stream in array → **`LSM-EDGE-51`** (async race).
 
-Merge pins: `LSM-MERGE-01`, `LSM-MERGE-02`, `LSM-MERGE-04`, `LSM-MERGE-09`, `LSM-MERGE-19`, `LSM-MERGE-28`, `LSM-MERGE-52`, `LSM-MERGE-65`, `LSM-MERGE-96`–`135`.
+**Authority:** `test/edge.test.ts` — canonical **`LSM-EDGE-*`** pins (strategy tests remain informative cross-refs).
 
-Each cell → `LSM-EDGE-NN` in `test/edge.test.ts` (P7).
+Diagram: [edge-matrix.svg](./img/edge-matrix.svg)
+
+### G.1 Extended + no-leak + supplemental (P7)
+
+| Range                  | Scope                                                                                     |
+| ---------------------- | ----------------------------------------------------------------------------------------- |
+| **`LSM-EDGE-24`–`45`** | Input forms (`Record`, labeled), `failFast`, ReadableStream break, signal + `onFinish`    |
+| **`LSM-EDGE-46`–`50`** | No-leak audit + same-iterator replay (**`LSM-REL-09`**)                                   |
+| **`LSM-EDGE-51`–`59`** | Empty-record, `onFinish.aborted`, failover event, signal×throw, doc integrity, early exit |
+| **`LSM-EDGE-06b`**     | `ensemble` alias parity                                                                   |
+
+### G.2 Ultra-extended §E (`LSM-EDGE-60`–`99`)
+
+| Range                  | Scope                                                                                                     |
+| ---------------------- | --------------------------------------------------------------------------------------------------------- |
+| **`LSM-EDGE-60`–`69`** | Duplicate labeled IDs, `isUsable`/`isError`/`isFinal`, fallback policies, merge `round-robin`, empty `{}` |
+| **`LSM-EDGE-70`–`79`** | Tee drop/bounded/ReadableStream, cancel-all, signal abort + `onFinish.aborted`, mid-stream merge abort    |
+| **`LSM-EDGE-80`–`89`** | `null`/`undefined`/binary pass-through, long empty chains, race lazy open on break, tee no-leak           |
+| **`LSM-EDGE-90`–`99`** | Merge lazy concurrency break, sync-throw `onFinish` guard, mixed empty/throw/good chains, array vs Record |
+
+Race cross-refs: `LSM-RACE-05`, `LSM-RACE-09`, `LSM-RACE-19`, `LSM-RACE-28`, `LSM-RACE-43`, `LSM-RACE-57`, `LSM-RACE-62`–`74`, `LSM-RACE-80`.
+
+Merge cross-refs: `LSM-MERGE-01`, `LSM-MERGE-02`, `LSM-MERGE-04`, `LSM-MERGE-09`, `LSM-MERGE-19`, `LSM-MERGE-28`, `LSM-MERGE-52`, `LSM-MERGE-65`, `LSM-MERGE-96`–`135`.
 
 ---
 

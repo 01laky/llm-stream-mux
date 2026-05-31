@@ -3,6 +3,30 @@
 All notable changes to this project are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/); versioning follows [Semantic Versioning](https://semver.org/).
 
+## [0.7.0]
+
+### Added
+
+- **`test/edge.test.ts`** — `LSM-EDGE-01`–`99` + `06b` §23 matrix, extended pins, no-leak audit, supplemental §D, ultra-extended §E
+- **`test/helpers/edge-matrix.ts`** — shared EDGE collectors, `flushMicrotasks`, `assertMuxCancelled`
+- **`LSM-REL-09a/b`** — dist contract + tarball smoke (`race([])`, `merge([])`)
+- **`docs/img/edge-matrix.mmd`** + SVG — P7 contract matrix overview
+
+### Changed
+
+- **`docs/edge-cases.md`** — §G cells pinned to **`LSM-EDGE-*`** with Test ID column
+- **`docs/testing-strategy.md`**, **`README.md`** — P7 status, **821** tests
+- **`docs/proposal.MD` §13** — **D11** (REL-09 no-leak), **D12** (tee signal cell)
+- **`scripts/smoke-package.mjs`** — edge empty-source smoke paths
+- **`test/release.test.ts`** — `LSM-REL-08a`/`09a` version **`0.7.0`**
+- **`src/index.ts`** — `MUX_PKG_VERSION` → **`0.7.0`**
+
+### Notes
+
+- Proposal §23 **`LSM-REL-02`** no-leak remapped to **`LSM-REL-09`** (export contract keeps **`LSM-REL-02`**)
+- **`examples/node-fetch/*`** deferred to P8
+- Next milestone **`1.0.0`** after P8 (docs, examples, API freeze)
+
 ## [0.6.0]
 
 ### Added

@@ -63,6 +63,11 @@ const mergeTimeoutIter = merge([
 const mergeTimeoutStep = await mergeTimeoutIter.next();
 if (mergeTimeoutStep.done || mergeTimeoutStep.value.kind !== "value") throw new Error("ESM merge overallTimeoutMs");
 await mergeTimeoutIter.return();
+let raceEmptyErr;
+try { race([]); } catch (e) { raceEmptyErr = e; }
+if (!raceEmptyErr || raceEmptyErr.code !== "NO_USABLE_SOURCE") throw new Error("ESM race empty");
+const mergeEmpty = await collect(merge([]));
+if (mergeEmpty.length !== 0) throw new Error("ESM merge empty");
 `,
 	);
 
@@ -107,6 +112,11 @@ const mergeTimeoutIter = merge([
 const mergeTimeoutStep = await mergeTimeoutIter.next();
 if (mergeTimeoutStep.done || mergeTimeoutStep.value.kind !== "value") throw new Error("CJS merge overallTimeoutMs");
 await mergeTimeoutIter.return();
+let raceEmptyErr;
+try { race([]); } catch (e) { raceEmptyErr = e; }
+if (!raceEmptyErr || raceEmptyErr.code !== "NO_USABLE_SOURCE") throw new Error("ESM race empty");
+const mergeEmpty = await collect(merge([]));
+if (mergeEmpty.length !== 0) throw new Error("ESM merge empty");
 `,
 	);
 

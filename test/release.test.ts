@@ -368,11 +368,11 @@ const { merge, ensemble, collect } = require("llm-stream-mux");
 });
 
 describe("LSM-REL-08 cross-cutting dist contract", () => {
-	it("LSM-REL-08a d.ts CommonOptions fields and MUX_PKG_VERSION 0.6.0", () => {
+	it("LSM-REL-08a d.ts CommonOptions fields and MUX_PKG_VERSION 0.7.0", () => {
 		const dts = readFileSync(join(root, "dist/index.d.ts"), "utf8");
 		expectCommonOptionsInDts(dts);
-		expect(MUX_PKG_VERSION).toBe("0.6.0");
-		expect(readPkg().version).toBe("0.6.0");
+		expect(MUX_PKG_VERSION).toBe("0.7.0");
+		expect(readPkg().version).toBe("0.7.0");
 	});
 
 	it(
@@ -409,6 +409,54 @@ const mergeIter = merge([
 const step = await mergeIter.next();
 if (step.done || step.value.kind !== "value") throw new Error("merge overallTimeoutMs smoke");
 await mergeIter.return();`,
+				);
+				execFileSync("node", ["esm.mjs"], { cwd: temp, stdio: "pipe" });
+			} finally {
+				rmSync(temp, { recursive: true, force: true });
+			}
+		},
+	);
+});
+
+describe("LSM-REL-09 edge matrix dist contract", () => {
+	it("LSM-REL-09a MUX_PKG_VERSION 0.7.0 and edge.test.ts exists on disk", () => {
+		expect(MUX_PKG_VERSION).toBe("0.7.0");
+		expect(readPkg().version).toBe("0.7.0");
+		expect(existsSync(join(root, "test/edge.test.ts"))).toBe(true);
+		const edgeSrc = readFileSync(join(root, "test/edge.test.ts"), "utf8");
+		expect(edgeSrc).toContain("LSM-EDGE-01");
+		expect(edgeSrc).toContain("LSM-EDGE-59");
+	});
+
+	it(
+		"LSM-REL-09b race empty and merge empty smoke from tarball",
+		{
+			timeout: TARBALL_SMOKE_MS,
+		},
+		() => {
+			const temp = mkdtempSync(join(tmpdir(), "lsm-edge-smoke-"));
+			try {
+				execFileSync("npm", ["pack", "--pack-destination", temp], { cwd: root, stdio: "pipe" });
+				const tarball = readdirSync(temp).find((f) => f.endsWith(".tgz"));
+				expect(tarball).toBeTruthy();
+
+				writeFileSync(
+					join(temp, "package.json"),
+					JSON.stringify({ type: "module", dependencies: {} }, null, 2),
+				);
+				execFileSync("npm", ["install", "--ignore-scripts", join(temp, tarball!)], {
+					cwd: temp,
+					stdio: "pipe",
+				});
+
+				writeFileSync(
+					join(temp, "esm.mjs"),
+					`import { race, merge, collect } from "llm-stream-mux";
+let raceErr;
+try { race([]); } catch (e) { raceErr = e; }
+if (!raceErr || raceErr.code !== "NO_USABLE_SOURCE") throw new Error("race([]) smoke");
+const mergeEmpty = await collect(merge([]));
+if (mergeEmpty.length !== 0) throw new Error("merge([]) smoke");`,
 				);
 				execFileSync("node", ["esm.mjs"], { cwd: temp, stdio: "pipe" });
 			} finally {

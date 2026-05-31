@@ -16,6 +16,7 @@ Mermaid — always commit updated **`.svg`** files alongside **`.mmd`** edits.
 | `tee-fanout.mmd`          | P2 tee: block / bounded / drop + cancel vs error vs natural close   |
 | `race-win.mmd`            | P3 race: pre-win reads, buffer flush, loser cancel, outcomes        |
 | `fallback-failover.mmd`   | P4 fallback: staggered chain, FailoverPolicy, timeout reset, cancel |
+| `edge-matrix.mmd`         | P7 §23 edge-case matrix + no-leak audit (`LSM-EDGE-*`)              |
 
 Regenerate after editing sources:
 

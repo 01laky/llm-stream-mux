@@ -481,6 +481,11 @@ This dual placement is a key differentiator vs. a generic async-iterator utility
   ordering, race/fallback commit timing, and error semantics predictable.
 - **D10 — Interop naming: `toReadable` + `toAsyncIterable` only.** Symmetric pair; no
   `fromAsyncIterable` alias (one name per direction for a clean 1.0.0 API freeze).
+- **D11 — P7 no-leak audit ID.** Proposal §23 `LSM-REL-02` no-leak remapped to **`LSM-REL-09`**
+  - **`LSM-EDGE-46`–`50`**; **`LSM-REL-02`** reserved for public export contract in
+    `test/types-contract.test.ts`.
+- **D12 — Tee §23 “signal aborted” cell.** No **`TeeOptions.signal`**; operational equivalent =
+  all-branch-cancel-before-read + lazy source never opened (**`LSM-EDGE-23`**).
 
 ## 14. Open questions
 

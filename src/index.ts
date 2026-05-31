@@ -38,4 +38,4 @@ export { fallback } from "./fallback.js";
 export { merge, ensemble } from "./merge.js";
 
 /** Synced with package.json version — updated at release boundaries. */
-export const MUX_PKG_VERSION = "0.6.0" as const;
+export const MUX_PKG_VERSION = "0.7.0" as const;

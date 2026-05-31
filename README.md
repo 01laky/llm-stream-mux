@@ -1,9 +1,9 @@
 # llm-stream-mux
 
-![version](https://img.shields.io/badge/version-0.6.0-lightgrey)
+![version](https://img.shields.io/badge/version-0.7.0-lightgrey)
 ![node](https://img.shields.io/badge/node-%3E%3D18-339933)
 ![runtime deps](https://img.shields.io/badge/runtime_deps-0-brightgreen)
-![status](https://img.shields.io/badge/status-P6_cross-green)
+![status](https://img.shields.io/badge/status-P7_edge-green)
 [![ci](https://github.com/01laky/llm-stream-mux/actions/workflows/ci.yml/badge.svg)](https://github.com/01laky/llm-stream-mux/actions/workflows/ci.yml)
 
 **Race, fallback, merge, and tee over any stream** — generic over `T`, zero runtime dependencies, Web Streams throughout.
@@ -12,7 +12,7 @@
 
 Orchestrate streams — **not another hand-rolled `Promise.race` on fetch**.
 
-**Status:** `0.6.0` — P0–P6: core internals, interop helpers, **`tee`**, **`race`**, **`fallback`**, **`merge`/`ensemble`**, and cross-cutting **`CommonOptions`** (timeouts, HWM). Spec: [`docs/proposal.MD`](./docs/proposal.MD).
+**Status:** `0.7.0` — P0–P7: core internals, interop helpers, **`tee`**, **`race`**, **`fallback`**, **`merge`/`ensemble`**, cross-cutting **`CommonOptions`**, and **§23 edge-case matrix** (`LSM-EDGE-*`). Spec: [`docs/proposal.MD`](./docs/proposal.MD).
 
 ---
 
@@ -200,17 +200,17 @@ pnpm verify
 
 CI runs `pnpm verify` on Node **18, 20, and 22**.
 
-| Command                   | Description                                                                                                                                    |
-| ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
-| `pnpm verify`             | portability + deps + lint + typecheck + build + test + smoke + docs + diagrams + format                                                        |
-| `pnpm build`              | tsup → ESM + CJS + declarations in `dist/`                                                                                                     |
-| `pnpm test`               | Vitest — `LSM-REL-*`, `LSM-TYP-*`, `LSM-CORE-*`, `LSM-TEE-*`, `LSM-RACE-*`, `LSM-FB-*`, `LSM-MERGE-*`, `LSM-X-*`, `LSM-EDGE-P0-*`, `LSM-SRC-*` |
-| `pnpm verify:portability` | forbid Node-only / ReadableStream.from patterns in `src/`                                                                                      |
-| `pnpm smoke:package`      | ESM/CJS import from `npm pack` tarball                                                                                                         |
-| `pnpm verify:deps`        | fail if runtime dependencies added                                                                                                             |
-| `pnpm diagrams:build`     | render `docs/img/*.mmd` → `.svg`                                                                                                               |
-| `pnpm diagrams:check`     | SVGs present and newer than `.mmd`                                                                                                             |
-| `pnpm release:prep`       | pre-tag checks when `dist/` exists                                                                                                             |
+| Command                   | Description                                                                                                                                                  |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `pnpm verify`             | portability + deps + lint + typecheck + build + test + smoke + docs + diagrams + format                                                                      |
+| `pnpm build`              | tsup → ESM + CJS + declarations in `dist/`                                                                                                                   |
+| `pnpm test`               | Vitest — `LSM-REL-*`, `LSM-TYP-*`, `LSM-CORE-*`, `LSM-TEE-*`, `LSM-RACE-*`, `LSM-FB-*`, `LSM-MERGE-*`, `LSM-X-*`, `LSM-EDGE-*`, `LSM-EDGE-P0-*`, `LSM-SRC-*` |
+| `pnpm verify:portability` | forbid Node-only / ReadableStream.from patterns in `src/`                                                                                                    |
+| `pnpm smoke:package`      | ESM/CJS import from `npm pack` tarball                                                                                                                       |
+| `pnpm verify:deps`        | fail if runtime dependencies added                                                                                                                           |
+| `pnpm diagrams:build`     | render `docs/img/*.mmd` → `.svg`                                                                                                                             |
+| `pnpm diagrams:check`     | SVGs present and newer than `.mmd`                                                                                                                           |
+| `pnpm release:prep`       | pre-tag checks when `dist/` exists                                                                                                                           |
 
 ---
 

@@ -1,0 +1,35 @@
+flowchart TB
+	subgraph ROW1["Row 1 · empty sources"]
+		R1A["race [] → NO_USABLE_SOURCE sync"]
+		R1B["fallback [] → ALL_FAILED sync"]
+		R1C["merge [] → completes empty"]
+	end
+
+	subgraph ROW3["Row 3 · all empty streams"]
+		R3A["race → async NO_USABLE_SOURCE"]
+		R3B["fallback → ALL_FAILED errors N"]
+		R3C["merge → done tags only"]
+		R3D["tee → branches close"]
+	end
+
+	subgraph ROW5["Row 5 · consumer break"]
+		R5A["race · loser race-lost · winner aborted"]
+		R5B["fallback · active aborted · backup not opened"]
+		R5C["merge · started slots aborted"]
+		R5D["tee · one branch cancel ≠ source cancel"]
+	end
+
+	subgraph TESTS["P7 authority · test/edge.test.ts"]
+		T1["LSM-EDGE-01..23 core matrix"]
+		T2["LSM-EDGE-46..50 no-leak audit"]
+		T3["LSM-REL-09 release contract"]
+	end
+
+	ROW1 --> TESTS
+	ROW3 --> TESTS
+	ROW5 --> TESTS
+
+	classDef row fill:#1e1b4b,stroke:#818cf8,stroke-width:2px,color:#e0e7ff
+	classDef test fill:#042f2e,stroke:#2dd4bf,stroke-width:2px,color:#ccfbf1
+	class R1A,R1B,R1C,R3A,R3B,R3C,R3D,R5A,R5B,R5C,R5D row
+	class T1,T2,T3 test
