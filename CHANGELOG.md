@@ -3,6 +3,30 @@
 All notable changes to this project are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/); versioning follows [Semantic Versioning](https://semver.org/).
 
+## [0.4.0]
+
+### Added
+
+- **`fallback(sources, opts?)`** — priority failover N→1 strategy with `FailoverPolicy` (`commit`, `buffered`, `post-emit`) (§7.1–§7.2)
+- **`src/internal/fallback-engine.ts`** — staggered active-source coordinator with per-attempt `timeoutMs` reset
+- **`test/fallback.test.ts`** — `LSM-FB-01`–`110` (extended normative bindings `76`–`85`)
+- **`LSM-REL-06a/b`** — dist + smoke contract for `fallback`
+- **Diagram** — `docs/img/fallback-failover.mmd` + SVG
+
+### Changed
+
+- **`src/index.ts`** — exports `fallback`; `MUX_PKG_VERSION` → `0.4.0`
+- **`scripts/smoke-package.mjs`** — smoke fallback chain after race
+- **`scripts/build-diagrams.mjs`** + **`scripts/check-diagrams.mjs`** — 11 diagrams including `fallback-failover`
+- **`test/release.test.ts`** — `LSM-REL-04b` / `LSM-REL-05b` allow `fallback` in d.ts
+- **Docs** — testing strategy, edge-case matrix §C, README status, usage-guides fallback section
+
+### Notes
+
+- `merge` / `ensemble` still types-only until P5
+- `overallTimeoutMs`, `highWaterMark` on strategies deferred to P6
+- Next milestone **`0.5.0`** after P5 (`merge`)
+
 ## [0.3.0]
 
 ### Added

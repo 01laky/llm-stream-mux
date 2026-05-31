@@ -5,6 +5,7 @@ flowchart TB
     toAsyncIterable["toAsyncIterable()"]
     tee["tee()"]
     race["race()"]
+    fb["fallback()"]
   end
 
   subgraph internal["Internal (P1)"]
@@ -20,8 +21,7 @@ flowchart TB
     lazy["lazy thunk deferred until next()"]
   end
 
-  subgraph future["Strategies P4-P5"]
-    fb["fallback()"]
+  subgraph future["Strategy P5"]
     merge["merge()"]
   end
 
@@ -30,15 +30,19 @@ flowchart TB
   lazy --> source
   source --> tee
   source --> race
+  source --> fb
   source --> future
   abort --> tee
   abort --> race
+  abort --> fb
   abort --> future
   errors --> tee
   errors --> race
+  errors --> fb
   errors --> future
   telemetry --> tee
   telemetry --> race
+  telemetry --> fb
   telemetry --> future
   toAsyncIterable --> rs
   collect --> ai

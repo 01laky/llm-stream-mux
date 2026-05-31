@@ -15,6 +15,7 @@ const diagrams = [
 	"core-internals.mmd",
 	"tee-fanout.mmd",
 	"race-win.mmd",
+	"fallback-failover.mmd",
 ];
 
 const errors = [];

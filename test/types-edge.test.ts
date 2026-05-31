@@ -283,13 +283,13 @@ describe("LSM-TYP extended type edge cases", () => {
 		expect(MUX_ERROR_CODES).toContain("IN_BAND_ERROR");
 	});
 
-	it("LSM-TYP-51 dist index.d.ts declares types and P2-P3 strategy exports", () => {
+	it("LSM-TYP-51 dist index.d.ts declares types and P2-P4 strategy exports", () => {
 		const dts = readFileSync(join(root, "dist/index.d.ts"), "utf8");
 		expect(dts).toContain("type Source<T>");
 		expect(dts).toContain("declare const MUX_ERROR_CODES");
 		expect(dts).toContain(`declare const MUX_PKG_VERSION: "${readPkgVersion()}"`);
 		expect(dts).toMatch(/declare function race\b/);
-		expect(dts).not.toMatch(/declare function fallback\b/);
+		expect(dts).toMatch(/declare function fallback\b/);
 		expect(dts).not.toMatch(/declare function merge\b/);
 		expect(dts).not.toContain("fromAsyncIterable");
 		expect(dts).toMatch(/declare function collect\b/);

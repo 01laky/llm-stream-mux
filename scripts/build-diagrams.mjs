@@ -17,6 +17,7 @@ const diagrams = [
 	"core-internals.mmd",
 	"tee-fanout.mmd",
 	"race-win.mmd",
+	"fallback-failover.mmd",
 ];
 
 for (const name of diagrams) {

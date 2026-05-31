@@ -1,6 +1,6 @@
 # Usage guides
 
-**Status:** P3 — `race` implemented in **`0.3.0`**; `fallback` / `merge` land with P4–P5. API frozen in [`proposal.MD`](./proposal.MD) §9.
+**Status:** P4 — `race` and **`fallback`** implemented in **`0.3.0`** / **`0.4.0`**; `merge` lands with P5. API frozen in [`proposal.MD`](./proposal.MD) §9.
 
 Strategy-focused guides for `llm-stream-mux`. For ecosystem pairing with [`llm-stream-assemble`](https://github.com/01laky/llm-stream-assemble) and guard, see [integration-cookbook](./integration-cookbook.md).
 
@@ -42,7 +42,7 @@ See [edge-cases](./edge-cases.md#race) and proposal §7.3.
 
 ## fallback
 
-Try sources in **priority order**. Lazy thunks `() => source` start the next source only when the active one fails.
+Try sources in **priority order**. Lazy thunks `() => source` start the next source only when the active one fails. **Implemented in `0.4.0`.**
 
 ```ts
 import { fallback } from "llm-stream-mux";

@@ -1,0 +1,36 @@
+flowchart TB
+  consumer["Consumer AsyncIterator.next()"]
+  fb["fallback() AsyncIterable"]
+  coord["FallbackCoordinator"]
+
+  consumer --> fb --> coord
+
+  subgraph chain["Priority chain — staggered start"]
+    s0["Source 0 active"]
+    fail["fail: transport / isError / timeout / empty"]
+    cancel["cancel(failover)"]
+    s1["Source 1 active only after fail"]
+    allfail["ALL_FAILED + errors[]"]
+    s0 --> fail --> cancel --> s1
+    s1 --> fail
+    fail --> allfail
+  end
+
+  coord --> chain
+
+  subgraph policies["FailoverPolicy"]
+    commit["commit — post-commit error propagates"]
+    buffered["buffered — hold until complete; discard on failover"]
+    postemit["post-emit — post-commit failover SourceEvent + switch"]
+  end
+
+  subgraph hooks["Hooks & signals"]
+    usable["isUsable commit gate"]
+    final["isFinal → final event"]
+    timeout["timeoutMs per active source — fresh timer on failover"]
+    signal["signal / return → aborted on all started"]
+    lock["post-cancel lock — late enqueue dropped"]
+  end
+
+  coord --> policies
+  coord --> hooks
