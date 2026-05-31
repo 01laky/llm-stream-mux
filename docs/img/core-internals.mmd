@@ -6,6 +6,7 @@ flowchart TB
     tee["tee()"]
     race["race()"]
     fb["fallback()"]
+    merge["merge() / ensemble"]
   end
 
   subgraph internal["Internal (P1)"]
@@ -21,28 +22,24 @@ flowchart TB
     lazy["lazy thunk deferred until next()"]
   end
 
-  subgraph future["Strategy P5"]
-    merge["merge()"]
-  end
-
   rs --> source
   ai --> source
   lazy --> source
   source --> tee
   source --> race
   source --> fb
-  source --> future
+  source --> merge
   abort --> tee
   abort --> race
   abort --> fb
-  abort --> future
+  abort --> merge
   errors --> tee
   errors --> race
   errors --> fb
-  errors --> future
+  errors --> merge
   telemetry --> tee
   telemetry --> race
   telemetry --> fb
-  telemetry --> future
+  telemetry --> merge
   toAsyncIterable --> rs
   collect --> ai

@@ -5,33 +5,37 @@ flowchart TB
 		S3["backup"]
 	end
 
-	subgraph MUX["merge() read-loop"]
-		PENDING["One pending read per source"]
-		BP["await output.ready · backpressure"]
-		RR["order: arrival or round-robin"]
-		PENDING --> BP --> RR
+	subgraph MUX["merge() / ensemble read-loop"]
+		READY["ready Map · settled reads retained"]
+		PENDING["One in-flight read per active source"]
+		BP["backpressure · max 1 Tagged queued"]
+		ORD["order: arrival | round-robin cursor"]
+		CONC["concurrency cap · FIFO waiting queue"]
+		READY --> BP --> ORD
+		PENDING --> READY
+		CONC --> PENDING
 	end
 
 	subgraph OUT["Tagged output stream"]
-		V["kind: value · source + item"]
+		V["kind: value · source + U"]
 		E["kind: error · MuxError"]
 		D["kind: done · source ended"]
 	end
 
 	S1 --> PENDING
 	S2 --> PENDING
-	S3 --> PENDING
-	RR --> V
-	RR --> E
-	RR --> D
+	S3 --> CONC
+	ORD --> V
+	ORD --> E
+	ORD --> D
 
 	OBS["onSourceEvent · out-of-band telemetry"]
-	MRG --> OBS
+	MUX --> OBS
 
 	classDef src fill:#0f172a,stroke:#38bdf8,stroke-width:2px,color:#e0f2fe
 	classDef core fill:#042f2e,stroke:#2dd4bf,stroke-width:2px,color:#ccfbf1
 	classDef tag fill:#134e4a,stroke:#5eead4,stroke-width:2px,color:#f0fdfa
 
 	class S1,S2,S3 src
-	class PENDING,BP,RR,MUX core
+	class READY,PENDING,BP,ORD,CONC,MUX core
 	class V,E,D,OBS tag

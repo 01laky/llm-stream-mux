@@ -27,7 +27,7 @@ try {
 	writeFileSync(
 		join(temp, "esm.mjs"),
 		`
-import { MUX_PKG_VERSION, MUX_ERROR_CODES, collect, race, tee, fallback, toAsyncIterable } from "llm-stream-mux";
+import { MUX_PKG_VERSION, MUX_ERROR_CODES, collect, race, tee, fallback, merge, ensemble, toAsyncIterable } from "llm-stream-mux";
 if (MUX_PKG_VERSION !== ${JSON.stringify(version)}) throw new Error("ESM version mismatch");
 if (!Array.isArray(MUX_ERROR_CODES) || MUX_ERROR_CODES.length !== 6) throw new Error("ESM codes");
 const empty = await collect((async function* () {})());
@@ -47,6 +47,12 @@ const fbOut = await collect(fallback([
   (async function* () { yield 42; })(),
 ]));
 if (fbOut.length !== 1 || fbOut[0] !== 42) throw new Error("ESM fallback");
+if (ensemble !== merge) throw new Error("ESM ensemble");
+const mergeTags = await collect(merge([
+  (async function* () { yield 1; })(),
+  (async function* () { yield 2; })(),
+]));
+if (mergeTags.filter((t) => t.kind === "value").length !== 2) throw new Error("ESM merge");
 `,
 	);
 
@@ -55,7 +61,7 @@ if (fbOut.length !== 1 || fbOut[0] !== 42) throw new Error("ESM fallback");
 		`
 import { createRequire } from "node:module";
 const require = createRequire(import.meta.url);
-const { MUX_PKG_VERSION, MUX_ERROR_CODES, collect, race, tee, fallback, toAsyncIterable } = require("llm-stream-mux");
+const { MUX_PKG_VERSION, MUX_ERROR_CODES, collect, race, tee, fallback, merge, ensemble, toAsyncIterable } = require("llm-stream-mux");
 if (MUX_PKG_VERSION !== ${JSON.stringify(version)}) throw new Error("CJS version mismatch");
 if (!Array.isArray(MUX_ERROR_CODES) || MUX_ERROR_CODES.length !== 6) throw new Error("CJS codes");
 const empty = await collect((async function* () {})());
@@ -75,6 +81,12 @@ const fbOut = await collect(fallback([
   (async function* () { yield 42; })(),
 ]));
 if (fbOut.length !== 1 || fbOut[0] !== 42) throw new Error("CJS fallback");
+if (ensemble !== merge) throw new Error("CJS ensemble");
+const mergeTags = await collect(merge([
+  (async function* () { yield 1; })(),
+  (async function* () { yield 2; })(),
+]));
+if (mergeTags.filter((t) => t.kind === "value").length !== 2) throw new Error("CJS merge");
 `,
 	);
 

@@ -35,6 +35,7 @@ export { collect, toReadable, toAsyncIterable } from "./internal/interop.js";
 export { tee } from "./tee.js";
 export { race } from "./race.js";
 export { fallback } from "./fallback.js";
+export { merge, ensemble } from "./merge.js";
 
 /** Synced with package.json version — updated at release boundaries. */
-export const MUX_PKG_VERSION = "0.4.0" as const;
+export const MUX_PKG_VERSION = "0.5.0" as const;

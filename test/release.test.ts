@@ -130,12 +130,13 @@ if (empty.length !== 0) throw new Error("tee drain");`,
 		}
 	});
 
-	it("LSM-REL-04b tee in d.ts race present fallback merge absent", () => {
+	it("LSM-REL-04b tee in d.ts race fallback merge ensemble present", () => {
 		const dts = readFileSync(join(root, "dist/index.d.ts"), "utf8");
 		expect(dts).toMatch(/declare function tee\b/);
 		expect(dts).toMatch(/declare function race\b/);
 		expect(dts).toMatch(/declare function fallback\b/);
-		expect(dts).not.toMatch(/declare function merge\b/);
+		expect(dts).toMatch(/declare function merge\b/);
+		expect(dts).toMatch(/declare const ensemble\b/);
 		expect(dts).not.toContain("normalizeSource");
 		expect(dts).not.toContain("createTelemetry");
 		expect(dts).not.toMatch(/declare function muxError\b/);
@@ -193,11 +194,12 @@ const { race, collect } = require("llm-stream-mux");
 		}
 	});
 
-	it("LSM-REL-05b race in d.ts fallback merge still absent", () => {
+	it("LSM-REL-05b race in d.ts fallback merge ensemble present", () => {
 		const dts = readFileSync(join(root, "dist/index.d.ts"), "utf8");
 		expect(dts).toMatch(/declare function race\b/);
 		expect(dts).toMatch(/declare function fallback\b/);
-		expect(dts).not.toMatch(/declare function merge\b/);
+		expect(dts).toMatch(/declare function merge\b/);
+		expect(dts).toMatch(/declare const ensemble\b/);
 		expect(dts).not.toContain("normalizeSource");
 		expect(dts).not.toContain("createTelemetry");
 		expect(dts).not.toMatch(/declare function muxError\b/);
@@ -255,18 +257,94 @@ const { fallback, collect } = require("llm-stream-mux");
 		}
 	});
 
-	it("LSM-REL-06b fallback in d.ts merge still absent race tee present", () => {
+	it("LSM-REL-06b fallback merge ensemble in d.ts race tee present", () => {
 		const dts = readFileSync(join(root, "dist/index.d.ts"), "utf8");
 		expect(dts).toMatch(/declare function fallback\b/);
 		expect(dts).toMatch(/declare function race\b/);
 		expect(dts).toMatch(/declare function tee\b/);
-		expect(dts).not.toMatch(/declare function merge\b/);
+		expect(dts).toMatch(/declare function merge\b/);
+		expect(dts).toMatch(/declare const ensemble\b/);
 		expect(dts).not.toContain("normalizeSource");
 		expect(dts).not.toContain("createTelemetry");
 		expect(dts).not.toMatch(/declare function muxError\b/);
 		for (const file of ["dist/index.js", "dist/index.cjs"]) {
 			const body = readFileSync(join(root, file), "utf8");
 			expect(body).toContain("fallback");
+			expect(body).not.toContain("node_modules");
+		}
+	});
+});
+
+describe("LSM-REL-07 merge dist contract", () => {
+	it("LSM-REL-07a merge ensemble runtime smoke from tarball", { timeout: TARBALL_SMOKE_MS }, () => {
+		const temp = mkdtempSync(join(tmpdir(), "lsm-merge-smoke-"));
+		try {
+			execFileSync("npm", ["pack", "--pack-destination", temp], { cwd: root, stdio: "pipe" });
+			const tarball = readdirSync(temp).find((f) => f.endsWith(".tgz"));
+			expect(tarball).toBeTruthy();
+
+			writeFileSync(
+				join(temp, "package.json"),
+				JSON.stringify({ type: "module", dependencies: {} }, null, 2),
+			);
+			execFileSync("npm", ["install", "--ignore-scripts", join(temp, tarball!)], {
+				cwd: temp,
+				stdio: "pipe",
+			});
+
+			writeFileSync(
+				join(temp, "esm.mjs"),
+				`import { merge, ensemble, collect } from "llm-stream-mux";
+if (ensemble !== merge) throw new Error("ensemble alias");
+const tags = await collect(merge([
+  (async function* () { yield 1; })(),
+  (async function* () { yield 2; })(),
+]));
+const values = tags.filter((t) => t.kind === "value");
+if (values.length !== 2) throw new Error("merge values");
+if (!values.some((t) => t.source === "0" && t.value === 1)) throw new Error("tag 0");
+if (!values.some((t) => t.source === "1" && t.value === 2)) throw new Error("tag 1");
+const dones = tags.filter((t) => t.kind === "done");
+if (dones.length !== 2) throw new Error("merge dones");`,
+			);
+			writeFileSync(
+				join(temp, "cjs.mjs"),
+				`import { createRequire } from "node:module";
+const require = createRequire(import.meta.url);
+const { merge, ensemble, collect } = require("llm-stream-mux");
+(async () => {
+  if (ensemble !== merge) throw new Error("ensemble alias");
+  const tags = await collect(merge([
+    (async function* () { yield 1; })(),
+    (async function* () { yield 2; })(),
+  ]));
+  const values = tags.filter((t) => t.kind === "value");
+  if (values.length !== 2) throw new Error("merge values");
+  const dones = tags.filter((t) => t.kind === "done");
+  if (dones.length !== 2) throw new Error("merge dones");
+})();`,
+			);
+			execFileSync("node", ["esm.mjs"], { cwd: temp, stdio: "pipe" });
+			execFileSync("node", ["cjs.mjs"], { cwd: temp, stdio: "pipe" });
+		} finally {
+			rmSync(temp, { recursive: true, force: true });
+		}
+	});
+
+	it("LSM-REL-07b merge ensemble in d.ts bundle race fallback tee present", () => {
+		const dts = readFileSync(join(root, "dist/index.d.ts"), "utf8");
+		expect(dts).toMatch(/declare function merge\b/);
+		expect(dts).toMatch(/declare const ensemble\b/);
+		expect(dts).toMatch(/declare function race\b/);
+		expect(dts).toMatch(/declare function fallback\b/);
+		expect(dts).toMatch(/declare function tee\b/);
+		expect(dts).not.toContain("normalizeSource");
+		expect(dts).not.toContain("createTelemetry");
+		expect(dts).not.toMatch(/declare function muxError\b/);
+		for (const file of ["dist/index.js", "dist/index.cjs"]) {
+			const body = readFileSync(join(root, file), "utf8");
+			expect(body).toContain("merge");
+			expect(body).toContain("ensemble");
 			expect(body).not.toContain("node_modules");
 		}
 	});

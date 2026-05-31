@@ -43,6 +43,8 @@ const PUBLIC_RUNTIME_EXPORTS = [
 	"tee",
 	"race",
 	"fallback",
+	"merge",
+	"ensemble",
 ] as const;
 
 const ALL_MUX_ERROR_CODES: MuxErrorCode[] = [
@@ -116,10 +118,19 @@ describe("LSM-REL-02 public export contract", () => {
 		expect("fromAsyncIterable" in mux).toBe(false);
 	});
 
-	it("LSM-REL-02 forbids premature strategy runtime exports", () => {
-		for (const name of ["merge", "ensemble", "muxError", "fromAsyncIterable"]) {
+	it("LSM-REL-02 forbids premature internal exports", () => {
+		for (const name of ["muxError", "fromAsyncIterable"]) {
 			expect(name in mux, name).toBe(false);
 		}
+	});
+
+	it("LSM-REL-02 exports merge runtime function", () => {
+		expect(typeof mux.merge).toBe("function");
+	});
+
+	it("LSM-REL-02 exports ensemble alias identical to merge", () => {
+		expect(typeof mux.ensemble).toBe("function");
+		expect(mux.ensemble).toBe(mux.merge);
 	});
 
 	it("LSM-REL-02 exports tee runtime function", () => {

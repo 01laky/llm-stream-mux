@@ -3,6 +3,31 @@
 All notable changes to this project are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/); versioning follows [Semantic Versioning](https://semver.org/).
 
+## [0.5.0]
+
+### Added
+
+- **`merge(sources, opts?)`** — concurrent N→1 **`Tagged<U>`** multiplex (§7.4)
+- **`ensemble`** — exported alias of **`merge`** (D4)
+- **`src/internal/merge-engine.ts`** — read-loop coordinator with `arrival` / `round-robin`, `concurrency`, `failFast`, global backpressure
+- **`test/merge.test.ts`** — `LSM-MERGE-01`–`135`
+- **`LSM-REL-07a/b`** — dist + smoke contract for `merge` + `ensemble`
+
+### Changed
+
+- **`src/index.ts`** — exports `merge`, `ensemble`; `MUX_PKG_VERSION` → `0.5.0`
+- **`scripts/smoke-package.mjs`** — smoke merge tagged output
+- **`docs/img/merge-tagged.mmd`** + SVG — read-loop, concurrency, Tagged kinds
+- **`docs/img/core-internals.mmd`** — `merge()` / `ensemble` in public API
+- **`test/release.test.ts`** — `LSM-REL-04b` / `05b` / `06b` allow `merge`; `LSM-REL-07`
+- **Docs** — testing strategy, edge-case §D, README status, usage-guides merge section
+
+### Notes
+
+- `timeoutMs`, `overallTimeoutMs`, `highWaterMark` on merge deferred to P6
+- `test/edge.test.ts` full matrix deferred to P7
+- Next milestone **`0.6.0`** after P6 (cross-cutting)
+
 ## [0.4.0]
 
 ### Added

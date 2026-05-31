@@ -1,6 +1,6 @@
 # Usage guides
 
-**Status:** P4 — `race` and **`fallback`** implemented in **`0.3.0`** / **`0.4.0`**; `merge` lands with P5. API frozen in [`proposal.MD`](./proposal.MD) §9.
+**Status:** P5 — **`merge`/`ensemble`** implemented in **`0.5.0`**; `race` and **`fallback`** in **`0.3.0`** / **`0.4.0`**. API frozen in [`proposal.MD`](./proposal.MD) §9.
 
 Strategy-focused guides for `llm-stream-mux`. For ecosystem pairing with [`llm-stream-assemble`](https://github.com/01laky/llm-stream-assemble) and guard, see [integration-cookbook](./integration-cookbook.md).
 
@@ -61,7 +61,7 @@ const out = fallback<MyEvent>([() => primary(), () => backup()], {
 
 ## merge / ensemble
 
-Run sources **concurrently**; output is `Tagged<T>` with `kind: "value" | "error" | "done"`.
+Run sources **concurrently**; output is `Tagged<T>` with `kind: "value" | "error" | "done"`. **Implemented in `0.5.0`.**
 
 ```ts
 import { merge } from "llm-stream-mux";
