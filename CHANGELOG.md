@@ -3,7 +3,7 @@
 All notable changes to this project are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/); versioning follows [Semantic Versioning](https://semver.org/).
 
-## [1.1.0] - 2026-06-08
+## [1.1.0]
 
 > **Scope:** toolchain modernization, Node runtime baseline raised to `>=22`
 > (Node 18/20 EOL), internal refactors, and an extended edge-case suite. The
