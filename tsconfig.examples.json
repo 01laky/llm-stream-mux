@@ -5,6 +5,8 @@
 		"rootDir": ".",
 		"noEmit": true,
 		"moduleResolution": "bundler",
+		"typeRoots": ["./node_modules/@types"],
+		"types": ["node"],
 		"paths": {
 			"llm-stream-mux": ["./dist/index.d.ts"]
 		}

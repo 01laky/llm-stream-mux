@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Post-pack publish simulation — npm install from tarball (ESM + CJS).
- * Flags: --node18, --node20, --all-runtimes (skip missing with warn).
+ * Flags: --node22, --node24, --all-runtimes (skip missing with warn).
  */
 import { execFileSync } from "node:child_process";
 import { mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
@@ -14,11 +14,11 @@ const version = pkg.version;
 const args = process.argv.slice(2);
 const allRuntimes = args.includes("--all-runtimes");
 const nodeFlags = allRuntimes
-	? ["--node18", "--node20"]
-	: args.filter((a) => a === "--node18" || a === "--node20");
+	? ["--node22", "--node24"]
+	: args.filter((a) => a === "--node22" || a === "--node24");
 
 function findNode(flag) {
-	const major = flag === "--node18" ? "18" : "20";
+	const major = flag === "--node22" ? "22" : "24";
 	for (const bin of [`node${major}`, `node-v${major}`, `node`]) {
 		try {
 			const out = execFileSync(bin, ["-v"], { encoding: "utf8", stdio: "pipe" }).trim();

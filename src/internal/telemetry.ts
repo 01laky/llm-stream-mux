@@ -13,6 +13,27 @@ export interface Telemetry {
 	finish(): MuxResult;
 }
 
+/**
+ * Build telemetry from a strategy options bag, forwarding only the hooks that
+ * are actually set — `exactOptionalPropertyTypes` forbids passing `undefined`
+ * through directly, so each engine used to inline this conditional copy.
+ */
+export function createTelemetryFromOpts(
+	strategy: MuxStrategy,
+	opts: {
+		onSourceEvent?: (e: SourceEvent) => void;
+		onFinish?: (result: MuxResult) => void;
+	},
+): Telemetry {
+	const hooks: {
+		onSourceEvent?: (e: SourceEvent) => void;
+		onFinish?: (result: MuxResult) => void;
+	} = {};
+	if (opts.onSourceEvent !== undefined) hooks.onSourceEvent = opts.onSourceEvent;
+	if (opts.onFinish !== undefined) hooks.onFinish = opts.onFinish;
+	return createTelemetry(strategy, hooks);
+}
+
 export function createTelemetry(
 	strategy: MuxStrategy,
 	opts: {

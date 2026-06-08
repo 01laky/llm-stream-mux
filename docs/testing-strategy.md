@@ -1,6 +1,6 @@
 # Testing strategy
 
-**Status:** P10 complete — **945** tests in CI via `pnpm verify`. Current release: **`1.0.0`** (stable, API frozen).
+**Status:** **972** tests in CI via `pnpm verify`. Current release: **`1.1.0`** (stable; API frozen as of **`1.0.0`**).
 
 ![Doc audit map](./img/doc-audit-map.svg)
 
@@ -79,9 +79,9 @@ Order: `verify:deps` → `verify:portability` → lint → typecheck → build �
 
 **`pnpm smoke:runtimes --skip-optional`** — local Node-only; **`--ci`** requires Bun + Deno (see **`smoke-runtimes.yml`**).
 
-**`pnpm smoke:published --all-runtimes`** — optional Node 18/20 cross-runtime ( **`release:prep --full`** ).
+**`pnpm smoke:published --all-runtimes`** — optional Node 22/24 cross-runtime ( **`release:prep --full`** ).
 
-CI matrix: Node **18, 20, 22** (`LSM-REL-12s`).
+CI matrix: Node **22, 24** (`LSM-REL-12s`).
 
 ---
 

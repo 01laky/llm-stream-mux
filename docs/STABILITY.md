@@ -2,6 +2,8 @@
 
 > **Public API frozen as of `1.0.0`.** §9 runtime exports and §6.3 `MuxErrorCode` set are stable under semver (see policy below).
 
+**Current release:** `1.1.0` — toolchain + Node `>=22` baseline and internal refactors only; the frozen surface is unchanged since `1.0.0`.
+
 Behavioral contracts are pinned by **`LSM-*`** tests — especially [`edge-cases.md` §G](./edge-cases.md#g-contract-matrix-binding-p7-070) (`LSM-EDGE-01`–`139`) and [`§H`](./edge-cases.md#h-ultra-extended-h-100-production-matrix-lsm-edge-140180) (`LSM-EDGE-140`–`180`).
 
 Report security issues per [`SECURITY.md`](../SECURITY.md).
@@ -72,7 +74,7 @@ No HTTP client, no provider parsing, no security filter, no baked-in LLM event m
 
 | Runtime            | Status                                                                                  |
 | ------------------ | --------------------------------------------------------------------------------------- |
-| Node.js 18+        | Primary CI — `pnpm verify`                                                              |
+| Node.js 22+        | Primary CI — `pnpm verify`                                                              |
 | Bun                | Smoke-tested — `pnpm smoke:runtimes --ci` (`.github/workflows/smoke-runtimes.yml`)      |
 | Deno               | Smoke-tested — same workflow                                                            |
 | Cloudflare Workers | **Expected** — fixture [`examples/workers-smoke/`](../examples/workers-smoke/README.md) |

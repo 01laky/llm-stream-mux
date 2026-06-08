@@ -102,7 +102,13 @@ function createReader<T>(
 				if (isReadableStream(src)) {
 					if (!streamReader) streamReader = src.getReader();
 					const result = await streamReader.read();
-					if (result.done) return { ok: false, done: true };
+					if (result.done) {
+						// Release the lock on natural completion so the underlying
+						// stream isn't pinned for the rest of the operation.
+						streamReader.releaseLock();
+						streamReader = undefined;
+						return { ok: false, done: true };
+					}
 					return { ok: true, value: result.value };
 				}
 
@@ -143,6 +149,12 @@ function createReader<T>(
 			}
 		},
 	};
+}
+
+/** True when a `Sources` collection holds no entries (array or record form). */
+export function isEmptySources(sources: Sources<unknown>): boolean {
+	if (Array.isArray(sources)) return sources.length === 0;
+	return Object.keys(sources).length === 0;
 }
 
 export function normalizeSource<T>(

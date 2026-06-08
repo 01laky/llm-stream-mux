@@ -1,6 +1,6 @@
 # Edge-case showcase
 
-**Status:** Stable **`1.0.0`** — contract matrix P7–P10 — **`LSM-EDGE-01`–`180`** + **`06b`** + **`LSM-REL-09`/`10`/`11`/`12`** in `test/edge.test.ts` / `test/release.test.ts` (**945** tests total).
+**Status:** Stable **`1.0.0`** — contract matrix P7–P10 — **`LSM-EDGE-01`–`180`** + **`06b`** + **`LSM-REL-09`/`10`/`11`/`12`** in `test/edge.test.ts` / `test/release.test.ts` (**972** tests total).
 
 What breaks when you hand-roll stream orchestration, and how `llm-stream-mux` pins behavior. For positioning vs generic utilities, see [comparison](./comparison.md).
 

@@ -428,11 +428,11 @@ const { merge, ensemble, collect } = require("llm-stream-mux");
 });
 
 describe("LSM-REL-08 cross-cutting dist contract", () => {
-	it("LSM-REL-08a d.ts CommonOptions fields and MUX_PKG_VERSION 1.0.0", () => {
+	it("LSM-REL-08a d.ts CommonOptions fields and MUX_PKG_VERSION 1.1.0", () => {
 		const dts = readFileSync(join(root, "dist/index.d.ts"), "utf8");
 		expectCommonOptionsInDts(dts);
-		expect(MUX_PKG_VERSION).toBe("1.0.0");
-		expect(readPkg().version).toBe("1.0.0");
+		expect(MUX_PKG_VERSION).toBe("1.1.0");
+		expect(readPkg().version).toBe("1.1.0");
 	});
 
 	it(
@@ -479,9 +479,9 @@ await mergeIter.return();`,
 });
 
 describe("LSM-REL-09 edge matrix dist contract", () => {
-	it("LSM-REL-09a MUX_PKG_VERSION 1.0.0 and edge.test.ts exists on disk", () => {
-		expect(MUX_PKG_VERSION).toBe("1.0.0");
-		expect(readPkg().version).toBe("1.0.0");
+	it("LSM-REL-09a MUX_PKG_VERSION 1.1.0 and edge.test.ts exists on disk", () => {
+		expect(MUX_PKG_VERSION).toBe("1.1.0");
+		expect(readPkg().version).toBe("1.1.0");
 		expect(existsSync(join(root, "test/edge.test.ts"))).toBe(true);
 		const edgeSrc = readFileSync(join(root, "test/edge.test.ts"), "utf8");
 		expect(edgeSrc).toContain("LSM-EDGE-01");
@@ -585,8 +585,8 @@ describe("LSM-REL-10 P8 examples and pack contract", () => {
 	});
 
 	it("LSM-REL-10c release prep script passes", () => {
-		expect(MUX_PKG_VERSION).toBe("1.0.0");
-		expect(readPkg().version).toBe("1.0.0");
+		expect(MUX_PKG_VERSION).toBe("1.1.0");
+		expect(readPkg().version).toBe("1.1.0");
 		execFileSync("node", ["scripts/release-prep.mjs"], { cwd: root, stdio: "pipe" });
 	});
 
@@ -694,8 +694,8 @@ describe("LSM-REL-11 P9 pre-1.0 §25 audit contract", () => {
 		}
 	});
 
-	it("LSM-REL-11c release prep script passes at 1.0.0", () => {
-		expect(readPkg().version).toBe("1.0.0");
+	it("LSM-REL-11c release prep script passes at 1.1.0", () => {
+		expect(readPkg().version).toBe("1.1.0");
 		execFileSync("node", ["scripts/release-prep.mjs"], { cwd: root, stdio: "pipe" });
 	});
 
@@ -762,9 +762,9 @@ describe("LSM-REL-11 P9 pre-1.0 §25 audit contract", () => {
 		expect(proposal).toContain("0.9.0");
 	});
 
-	it("LSM-REL-11k MUX_PKG_VERSION and package.json pinned 1.0.0", () => {
-		expect(MUX_PKG_VERSION).toBe("1.0.0");
-		expect(readPkg().version).toBe("1.0.0");
+	it("LSM-REL-11k MUX_PKG_VERSION and package.json pinned 1.1.0", () => {
+		expect(MUX_PKG_VERSION).toBe("1.1.0");
+		expect(readPkg().version).toBe("1.1.0");
 		const dts = readFileSync(join(root, "dist/index.d.ts"), "utf8");
 		expect(dts).not.toContain('MUX_PKG_VERSION: "0.8.0"');
 	});
@@ -782,7 +782,7 @@ describe("LSM-REL-11 P9 pre-1.0 §25 audit contract", () => {
 		expect(pkg.exports?.["."]).toBeTruthy();
 		expect(pkg.files).toContain("dist");
 		expect(pkg.private).not.toBe(true);
-		expect(pkg.engines?.node).toContain("18");
+		expect(pkg.engines?.node).toContain("22");
 		expect(pkg.publishConfig?.access).toBe("public");
 	});
 
@@ -874,11 +874,11 @@ describe("LSM-REL-12 P10 1.0.0 stable freeze contract", () => {
 		expect(section).toContain("§6.3");
 	});
 
-	it("LSM-REL-12d Version pins at 1.0.0", () => {
-		expect(readPkg().version).toBe("1.0.0");
-		expect(MUX_PKG_VERSION).toBe("1.0.0");
+	it("LSM-REL-12d Version pins at 1.1.0", () => {
+		expect(readPkg().version).toBe("1.1.0");
+		expect(MUX_PKG_VERSION).toBe("1.1.0");
 		const dts = readFileSync(join(root, "dist/index.d.ts"), "utf8");
-		expect(dts).toContain('"1.0.0"');
+		expect(dts).toContain('"1.1.0"');
 	});
 
 	it("LSM-REL-12e Edge matrix authority LSM-EDGE-179 and §H", () => {
@@ -921,7 +921,7 @@ describe("LSM-REL-12 P10 1.0.0 stable freeze contract", () => {
 	});
 
 	it(
-		"LSM-REL-12i smoke-published.mjs passes at 1.0.0",
+		"LSM-REL-12i smoke-published.mjs passes at 1.1.0",
 		() => {
 			execFileSync("node", ["scripts/smoke-published.mjs"], {
 				cwd: root,
@@ -981,7 +981,7 @@ describe("LSM-REL-12 P10 1.0.0 stable freeze contract", () => {
 		}
 	});
 
-	it("LSM-REL-12n release-prep passes at 1.0.0", () => {
+	it("LSM-REL-12n release-prep passes at 1.1.0", () => {
 		execFileSync("node", ["scripts/release-prep.mjs"], { cwd: root, stdio: "pipe" });
 	});
 
@@ -996,7 +996,7 @@ describe("LSM-REL-12 P10 1.0.0 stable freeze contract", () => {
 		const body = readFileSync(join(root, "docs/testing-strategy.md"), "utf8");
 		expect(body).toContain("LSM-REL-12");
 		expect(body).toContain("§H");
-		expect(body).toContain("945");
+		expect(body).toContain("972");
 	});
 
 	it("LSM-REL-12q STABILITY.md post-freeze semver policy declared", () => {
@@ -1015,13 +1015,12 @@ describe("LSM-REL-12 P10 1.0.0 stable freeze contract", () => {
 
 	it("LSM-REL-12s engines.node compatibility.md and ci.yml Node matrix aligned", () => {
 		const pkg = readPkg();
-		expect(pkg.engines?.node).toContain("18");
+		expect(pkg.engines?.node).toContain("22");
 		const compat = readFileSync(join(root, "docs/compatibility.md"), "utf8");
-		expect(compat).toMatch(/18.*20.*22|18, 20, 22/);
+		expect(compat).toMatch(/22.*24|22, 24/);
 		const ci = readFileSync(join(root, ".github/workflows/ci.yml"), "utf8");
-		expect(ci).toContain("18");
-		expect(ci).toContain("20");
 		expect(ci).toContain("22");
+		expect(ci).toContain("24");
 	});
 
 	it("LSM-REL-12t npm pack tarball contents match REL-11p publish shape", () => {

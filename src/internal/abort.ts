@@ -33,6 +33,29 @@ export function timeoutSignal(ms: number): AbortSignal {
 	return AbortSignal.timeout(ms);
 }
 
+/** Fire-and-forget a cancel()/return() promise — rejections must not mask primary results (§7.5). */
+export function swallowCancel(promise: Promise<unknown>): void {
+	void promise.catch(() => {
+		/* §7.5 */
+	});
+}
+
+/** Forward an upstream AbortSignal onto the per-operation controller (once). */
+export function wireAbortSignal(signal: AbortSignal | undefined, opCtrl: AbortController): void {
+	if (!signal) return;
+	if (signal.aborted) {
+		opCtrl.abort(signal.reason);
+		return;
+	}
+	signal.addEventListener(
+		"abort",
+		() => {
+			opCtrl.abort(signal.reason);
+		},
+		{ once: true },
+	);
+}
+
 export function muxCancelledReason(reason: MuxCancelledReason): MuxCancelled {
 	return { name: "MuxCancelled", reason };
 }

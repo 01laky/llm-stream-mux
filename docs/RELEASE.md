@@ -77,7 +77,7 @@ Report issues per [SECURITY.md](../SECURITY.md).
 
 ## Highlights
 
-- **945** tests green (`pnpm verify`)
+- **972** tests green (`pnpm verify`)
 - **`LSM-EDGE-140`–`180`** — §H production edge matrix + full-matrix integrity
 - **`LSM-REL-12a`–`12u`** — stable freeze gates (semver policy, pack audit, bench baseline, engines sync, rollback docs)
 - **`scripts/verify-doc-links.mjs`**, **`scripts/smoke-published.mjs`** (cross-runtime flags)
@@ -98,14 +98,14 @@ Full notes: [CHANGELOG.md](../CHANGELOG.md#100).
 
 ## GitHub Release checklist (stable)
 
-Use when drafting **`v1.0.0`** (or later stable tags):
+Use when drafting **`v1.0.0`** (or later stable tags, e.g. **`v1.1.0`**):
 
 | Field           | Value                                                               |
 | --------------- | ------------------------------------------------------------------- |
 | **Title**       | `v1.0.0 — first stable npm release`                                 |
 | **Pre-release** | **Off**                                                             |
 | **Install**     | `npm install llm-stream-mux@1.0.0`                                  |
-| **Tests**       | **945** green via `pnpm verify`                                     |
+| **Tests**       | **972** green via `pnpm verify`                                     |
 | **CHANGELOG**   | Link [CHANGELOG.md#100](../CHANGELOG.md#100)                        |
 | **Security**    | Link [SECURITY.md](../SECURITY.md)                                  |
 | **Provenance**  | Note npm provenance badge after `npm publish --provenance`          |

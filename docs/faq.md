@@ -1,6 +1,6 @@
 # FAQ
 
-**Status:** P10 (`1.0.0`) — stable release; §9 / §6.3 frozen under semver; **945** tests green.
+**Status:** `1.1.0` — stable release; §9 / §6.3 frozen as of `1.0.0` under semver; **972** tests green.
 
 ---
 
@@ -56,7 +56,7 @@ Requires Node.js **18+** (or Bun/Deno/Workers with Web Streams). See [compatibil
 - **First stable npm release** — public API frozen per [STABILITY.md](./STABILITY.md)
 - **`LSM-EDGE-140`–`180`** — §H production edge matrix + full-matrix integrity
 - **`LSM-REL-12a`–`12u`** — freeze gates (doc links, pack audit, bench baseline, rollback docs)
-- **945** tests (was 883 at `0.9.0`)
+- **972** tests (was 945 at `1.0.0`, 883 at `0.9.0`)
 - **Public API unchanged** vs `0.9.0` (export shape and behavior)
 
 ---

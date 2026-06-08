@@ -2,7 +2,9 @@ import type { CommonOptions, MergeOptions } from "../types.js";
 
 export function assertAbortSignalTimeoutAvailable(): void {
 	if (typeof AbortSignal.timeout !== "function") {
-		throw new RangeError("timeoutMs requires AbortSignal.timeout (Node >= 18)");
+		throw new RangeError(
+			"timeoutMs requires AbortSignal.timeout (Node 22+, Deno, Bun, or Workers)",
+		);
 	}
 }
 

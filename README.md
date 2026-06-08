@@ -1,7 +1,7 @@
 # llm-stream-mux
 
-![version](https://img.shields.io/badge/version-1.0.0-blue)
-![node](https://img.shields.io/badge/node-%3E%3D18-339933)
+![version](https://img.shields.io/badge/version-1.1.0-blue)
+![node](https://img.shields.io/badge/node-%3E%3D22-339933)
 ![runtime deps](https://img.shields.io/badge/runtime_deps-0-brightgreen)
 ![status](https://img.shields.io/badge/status-stable-brightgreen)
 [![ci](https://github.com/01laky/llm-stream-mux/actions/workflows/ci.yml/badge.svg)](https://github.com/01laky/llm-stream-mux/actions/workflows/ci.yml)
@@ -12,7 +12,7 @@
 
 Orchestrate streams — **not another hand-rolled `Promise.race` on fetch**.
 
-**Status:** `1.0.0` — stable; **§9 runtime exports and §6.3 `MuxErrorCode` frozen** under semver. **945** tests via `pnpm verify`. Spec: [`docs/proposal.MD`](./docs/proposal.MD) · stability: [`docs/STABILITY.md`](./docs/STABILITY.md) · security: [`SECURITY.md`](./SECURITY.md)
+**Status:** `1.1.0` — stable; **§9 runtime exports and §6.3 `MuxErrorCode` frozen as of `1.0.0`** under semver. **972** tests via `pnpm verify`. Spec: [`docs/proposal.MD`](./docs/proposal.MD) · stability: [`docs/STABILITY.md`](./docs/STABILITY.md) · security: [`SECURITY.md`](./SECURITY.md)
 
 ---
 
@@ -82,7 +82,7 @@ Walkthrough: [docs/edge-cases.md](./docs/edge-cases.md).
 - **Generic over `T`** — `Uint8Array` byte mode or any parsed event type.
 - **Four strategies** with semantic hooks (`isError`, `isUsable`, `isFinal`, `mapEach`).
 - **Observable** — `onSourceEvent`, `MuxResult`, stable `MuxError` codes.
-- **Runtime-agnostic** — Node 18+, Bun, Deno, Cloudflare Workers (Web Streams only).
+- **Runtime-agnostic** — Node 22+, Bun, Deno, Cloudflare Workers (Web Streams only).
 
 ---
 
@@ -95,7 +95,7 @@ npm install llm-stream-mux
 
 Pin: `npm install llm-stream-mux@1.0.0`. Public API frozen at **`1.0.0`** ([STABILITY](./docs/STABILITY.md)).
 
-**Requirements:** Node.js 18+ · see [compatibility matrix](./docs/compatibility.md).
+**Requirements:** Node.js 22+ · see [compatibility matrix](./docs/compatibility.md).
 
 ---
 
@@ -206,7 +206,7 @@ pnpm install
 pnpm verify
 ```
 
-CI runs `pnpm verify` on Node **18, 20, and 22**; [`smoke-runtimes.yml`](./.github/workflows/smoke-runtimes.yml) smoke-tests Bun + Deno.
+CI runs `pnpm verify` on Node **22 and 24**; [`smoke-runtimes.yml`](./.github/workflows/smoke-runtimes.yml) smoke-tests Bun + Deno.
 
 | Command                   | Description                                                                                                                                                  |
 | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -217,7 +217,7 @@ CI runs `pnpm verify` on Node **18, 20, and 22**; [`smoke-runtimes.yml`](./.gith
 | `pnpm smoke:package`      | ESM/CJS import from `npm pack` tarball                                                                                                                       |
 | `pnpm smoke:runtimes`     | Node (+ optional Bun/Deno) tarball smoke — `--skip-optional` locally, `--ci` in Actions                                                                      |
 | `pnpm smoke:consumer`     | ESM + CJS downstream consumer smoke from tarball                                                                                                             |
-| `pnpm smoke:published`    | post-pack publish simulation (`--node18` / `--node20` / `--all-runtimes`)                                                                                    |
+| `pnpm smoke:published`    | post-pack publish simulation (`--node22` / `--node24` / `--all-runtimes`)                                                                                    |
 | `pnpm verify:pre1`        | maintainer gate: verify + release:prep + smoke:runtimes + smoke:consumer + smoke:published                                                                   |
 | `pnpm verify:deps`        | fail if runtime dependencies added                                                                                                                           |
 | `pnpm diagrams:build`     | render `docs/img/*.mmd` → `.svg`                                                                                                                             |

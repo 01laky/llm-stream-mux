@@ -1,33 +1,12 @@
 import { muxError } from "../errors.js";
-import { muxCancelledReason } from "./abort.js";
+import { muxCancelledReason, swallowCancel, wireAbortSignal } from "./abort.js";
 import { createOutputQueue } from "./queue.js";
 import type { NormalizedReader, SourceReadResult } from "./source.js";
-import { createTelemetry } from "./telemetry.js";
+import { createTelemetryFromOpts } from "./telemetry.js";
 import { createTtfUsableTimer, timeoutMuxError, wireOverallTimeout } from "./timeouts.js";
-import type { MuxCancelled, MuxResult, RaceOptions, SourceEvent } from "../types.js";
+import type { MuxCancelled, RaceOptions } from "../types.js";
 
 type ReadPayload<T> = { id: string; result: SourceReadResult<T> };
-
-function swallowCancel(promise: Promise<unknown>): void {
-	void promise.catch(() => {
-		/* §7.5 */
-	});
-}
-
-function wireAbortSignal(signal: AbortSignal | undefined, opCtrl: AbortController): void {
-	if (!signal) return;
-	if (signal.aborted) {
-		opCtrl.abort(signal.reason);
-		return;
-	}
-	signal.addEventListener(
-		"abort",
-		() => {
-			opCtrl.abort(signal.reason);
-		},
-		{ once: true },
-	);
-}
 
 function readOne<T>(reader: NormalizedReader<T>): Promise<ReadPayload<T>> {
 	return reader.next().then((result) => ({ id: reader.id, result }));
@@ -55,13 +34,7 @@ export function createRaceIterable<T, U = T>(
 			}
 			iterableActive = true;
 
-			const telemetryHooks: {
-				onSourceEvent?: (e: SourceEvent) => void;
-				onFinish?: (result: MuxResult) => void;
-			} = {};
-			if (opts.onSourceEvent !== undefined) telemetryHooks.onSourceEvent = opts.onSourceEvent;
-			if (opts.onFinish !== undefined) telemetryHooks.onFinish = opts.onFinish;
-			const telemetry = createTelemetry("race", telemetryHooks);
+			const telemetry = createTelemetryFromOpts("race", opts);
 			const opCtrl = new AbortController();
 			wireAbortSignal(opts.signal, opCtrl);
 

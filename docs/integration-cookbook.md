@@ -12,7 +12,7 @@ Runnable mux-only examples: [examples/node-fetch/](../examples/node-fetch/).
 
 ## Prerequisites
 
-- Node.js 18+ (Web Streams, `AbortController`, `AbortSignal.timeout`)
+- Node.js 22+ (Web Streams, `AbortController`, `AbortSignal.timeout`)
 - Your own HTTP client and auth
 - Optional: `llm-stream-assemble` for parsing, guard for filtering
 
@@ -186,7 +186,7 @@ Pass a shared **`AbortSignal`** to mux **`CommonOptions`** to abort all strategi
 
 | Runtime            | Notes                                                                |
 | ------------------ | -------------------------------------------------------------------- |
-| Node 18+           | `fetch` Response bodies are `ReadableStream` — ideal for hard cancel |
+| Node 22+           | `fetch` Response bodies are `ReadableStream` — ideal for hard cancel |
 | Cloudflare Workers | Web Streams native; use `ReadableStream` sources for race/fallback   |
 | Deno / Bun         | Same Web Streams surface; no `node:stream` in mux `src/`             |
 

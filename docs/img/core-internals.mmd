@@ -10,13 +10,13 @@ flowchart TB
   end
 
   subgraph internal["Internal (P1 + P6)"]
-    source["normalizeSource / normalizeSources"]
-    abort["combineSignals / timeoutSignal"]
+    source["normalizeSource / normalizeSources / isEmptySources"]
+    abort["combineSignals / wireAbortSignal / timeoutSignal"]
     errors["muxError()"]
-    telemetry["createTelemetry()"]
+    telemetry["createTelemetry / createTelemetryFromOpts"]
     queue["createOutputQueue()"]
     validate["validateCommonOptions()"]
-    timeouts["wireOverallTimeout / TTF-usable timers"]
+    timeouts["armTimer (overall + TTF-usable)"]
   end
 
   subgraph sources["Source forms"]

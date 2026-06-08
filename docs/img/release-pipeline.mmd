@@ -4,7 +4,7 @@ flowchart TB
     P --> L[lint + typecheck]
     L --> B[build]
     B --> E[typecheck:examples]
-    E --> T[test — LSM-* 945]
+    E --> T[test — LSM-* 972]
     T --> SP[smoke:package]
     SP --> VD[verify:docs]
     VD --> DG[diagrams:check]
@@ -12,7 +12,7 @@ flowchart TB
   end
 
   subgraph pre1["pnpm verify:pre1 (maintainer)"]
-    V[verify — 945 tests] --> RP[release:prep]
+    V[verify — 972 tests] --> RP[release:prep]
     RP --> SR[smoke:runtimes --skip-optional]
     SR --> SC[smoke:consumer ESM+CJS]
     SC --> SPUB[smoke:published]

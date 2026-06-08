@@ -1,38 +1,10 @@
 import { muxError } from "../errors.js";
-import { muxCancelledReason } from "./abort.js";
+import { muxCancelledReason, swallowCancel, wireAbortSignal } from "./abort.js";
 import { createOutputQueue } from "./queue.js";
 import type { NormalizedReader, SourceReadResult } from "./source.js";
-import { createTelemetry } from "./telemetry.js";
+import { createTelemetryFromOpts } from "./telemetry.js";
 import { createTtfUsableTimer, timeoutMuxError, wireOverallTimeout } from "./timeouts.js";
-import type {
-	FailoverPolicy,
-	FallbackOptions,
-	MuxCancelled,
-	MuxError,
-	MuxResult,
-	SourceEvent,
-} from "../types.js";
-
-function swallowCancel(promise: Promise<unknown>): void {
-	void promise.catch(() => {
-		/* §7.5 */
-	});
-}
-
-function wireAbortSignal(signal: AbortSignal | undefined, opCtrl: AbortController): void {
-	if (!signal) return;
-	if (signal.aborted) {
-		opCtrl.abort(signal.reason);
-		return;
-	}
-	signal.addEventListener(
-		"abort",
-		() => {
-			opCtrl.abort(signal.reason);
-		},
-		{ once: true },
-	);
-}
+import type { FailoverPolicy, FallbackOptions, MuxCancelled, MuxError } from "../types.js";
 
 export function createFallbackIterable<T, U = T>(
 	readers: NormalizedReader<T>[],
@@ -56,13 +28,7 @@ export function createFallbackIterable<T, U = T>(
 			}
 			iterableActive = true;
 
-			const telemetryHooks: {
-				onSourceEvent?: (e: SourceEvent) => void;
-				onFinish?: (result: MuxResult) => void;
-			} = {};
-			if (opts.onSourceEvent !== undefined) telemetryHooks.onSourceEvent = opts.onSourceEvent;
-			if (opts.onFinish !== undefined) telemetryHooks.onFinish = opts.onFinish;
-			const telemetry = createTelemetry("fallback", telemetryHooks);
+			const telemetry = createTelemetryFromOpts("fallback", opts);
 			const opCtrl = new AbortController();
 			wireAbortSignal(opts.signal, opCtrl);
 
@@ -110,7 +76,7 @@ export function createFallbackIterable<T, U = T>(
 				} catch (cause) {
 					const err = muxError({ code: "SOURCE_ERROR", source: sourceId, cause });
 					if (!committed && activeIndex + 1 < readers.length && policy === "commit") {
-						await failActiveSource(err, false);
+						await failActiveSource(err);
 						return false;
 					}
 					failConsumer(err);
@@ -139,7 +105,7 @@ export function createFallbackIterable<T, U = T>(
 				if (finished || queueFailed() || cancelled.has(id) || committed) return;
 				const err = muxError({ code: "TIMEOUT", source: id });
 				telemetry.emit({ source: id, type: "timeout", error: err });
-				await failActiveSource(err, false);
+				await failActiveSource(err);
 			};
 
 			const cancelSource = async (reader: NormalizedReader<T>, reason: MuxCancelled) => {
@@ -181,7 +147,7 @@ export function createFallbackIterable<T, U = T>(
 				failedErrors.push(err);
 			};
 
-			const failActiveSource = async (err: MuxError, _postCommitFailover: boolean) => {
+			const failActiveSource = async (err: MuxError) => {
 				const id = activeId();
 				disarmAttemptTimeout();
 				recordFailure(err);
@@ -303,7 +269,7 @@ export function createFallbackIterable<T, U = T>(
 					if (committed) {
 						await handlePostCommitError(err);
 					} else {
-						await failActiveSource(err, false);
+						await failActiveSource(err);
 					}
 					return "done";
 				}
@@ -366,7 +332,7 @@ export function createFallbackIterable<T, U = T>(
 					if (committed) {
 						await handlePostCommitError(err);
 					} else {
-						await failActiveSource(err, false);
+						await failActiveSource(err);
 					}
 					return "done";
 				}
@@ -378,7 +344,6 @@ export function createFallbackIterable<T, U = T>(
 						if (!hasUsable) {
 							await failActiveSource(
 								muxError({ code: "SOURCE_ERROR", source: id, message: "no usable item" }),
-								false,
 							);
 							return "done";
 						}
@@ -390,7 +355,6 @@ export function createFallbackIterable<T, U = T>(
 				if (!committed) {
 					await failActiveSource(
 						muxError({ code: "SOURCE_ERROR", source: id, message: "empty without commit" }),
-						false,
 					);
 					return "done";
 				}

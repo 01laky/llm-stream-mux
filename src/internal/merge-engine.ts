@@ -1,39 +1,10 @@
 import { muxError } from "../errors.js";
-import { muxCancelledReason } from "./abort.js";
+import { muxCancelledReason, swallowCancel, wireAbortSignal } from "./abort.js";
 import { createOutputQueue } from "./queue.js";
 import type { NormalizedReader, SourceReadResult } from "./source.js";
-import { createTelemetry } from "./telemetry.js";
+import { createTelemetryFromOpts } from "./telemetry.js";
 import { timeoutMuxError, wireOverallTimeout } from "./timeouts.js";
-import type {
-	MergeOptions,
-	MuxCancelled,
-	MuxError,
-	MuxResult,
-	SourceEvent,
-	Tagged,
-	MergeOrder,
-} from "../types.js";
-
-function swallowCancel(promise: Promise<unknown>): void {
-	void promise.catch(() => {
-		/* §7.5 */
-	});
-}
-
-function wireAbortSignal(signal: AbortSignal | undefined, opCtrl: AbortController): void {
-	if (!signal) return;
-	if (signal.aborted) {
-		opCtrl.abort(signal.reason);
-		return;
-	}
-	signal.addEventListener(
-		"abort",
-		() => {
-			opCtrl.abort(signal.reason);
-		},
-		{ once: true },
-	);
-}
+import type { MergeOptions, MuxCancelled, MuxError, Tagged, MergeOrder } from "../types.js";
 
 export function createMergeIterable<T, U = T>(
 	readers: NormalizedReader<T>[],
@@ -58,13 +29,7 @@ export function createMergeIterable<T, U = T>(
 			}
 			iterableActive = true;
 
-			const telemetryHooks: {
-				onSourceEvent?: (e: SourceEvent) => void;
-				onFinish?: (result: MuxResult) => void;
-			} = {};
-			if (opts.onSourceEvent !== undefined) telemetryHooks.onSourceEvent = opts.onSourceEvent;
-			if (opts.onFinish !== undefined) telemetryHooks.onFinish = opts.onFinish;
-			const telemetry = createTelemetry("merge", telemetryHooks);
+			const telemetry = createTelemetryFromOpts("merge", opts);
 			const opCtrl = new AbortController();
 			wireAbortSignal(opts.signal, opCtrl);
 

@@ -3,6 +3,53 @@
 All notable changes to this project are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/); versioning follows [Semantic Versioning](https://semver.org/).
 
+## [1.1.0] - 2026-06-08
+
+> **Scope:** toolchain modernization, Node runtime baseline raised to `>=22`
+> (Node 18/20 EOL), internal refactors, and an extended edge-case suite. The
+> **public API surface is unchanged** — §9 runtime exports and §6.3 `MuxErrorCode`
+> remain frozen as of `1.0.0`, so this ships as a **minor**. Consumers still on
+> Node 18/20 must stay on `1.0.x`.
+
+### Changed
+
+- **Toolchain modernized** — ESLint `9 → 10`, TypeScript `5 → 6` (with
+  `ignoreDeprecations: "6.0"` for the tsup-injected `baseUrl`), Vitest `3 → 4`,
+  `@types/node` `22 → 24`, `globals` `16 → 17`, `tsup`/`prettier` patch bumps.
+- **`packageManager`** — pnpm `9.15.9 → 11.5.2`; build-script approvals moved to
+  `pnpm-workspace.yaml` (`allowBuilds: esbuild`).
+- **Node baseline `>=18` → `>=22`** — `engines`, CI matrix (`[22, 24]`), README
+  badge/requirements, `docs/compatibility.md`, `docs/STABILITY.md`,
+  `docs/testing-strategy.md`, `docs/integration-cookbook.md`, and
+  `scripts/smoke-published.mjs` flags (`--node22` / `--node24`) aligned (`LSM-REL-12s`).
+- **GitHub Actions** — `actions/checkout@v6`, `actions/setup-node@v6`,
+  `pnpm/action-setup@v6`.
+
+### Added
+
+- **`test/edge-extended.test.ts`** — extended edge-case suite **`LSM-XCOV-01`–`26`**
+  (27 tests) targeting branches the frozen §23 matrix left uncovered: post-win
+  source timeouts, mid-stream `isFinal` on the pumped winner, buffered/`commit`/
+  `post-emit` fallback tails, round-robin merge with `concurrency`, per-source
+  `sourceHighWaterMark` wrapping + cancel propagation, block/drop tee branch
+  cancellation, `toAsyncIterable` re-entry, the `AbortSignal.any`-absent
+  `combineSignals` fallback, and winner-fails-mid-stream paths. Suite total **972**.
+- **`@vitest/coverage-v8`** + **`pnpm coverage`** (v8 provider; `src/**`, text + html).
+
+### Refactored (internal, no API change)
+
+- Hoisted the per-engine duplicates `wireAbortSignal` / `swallowCancel` into
+  `internal/abort.ts`, the telemetry-hooks builder into
+  `createTelemetryFromOpts` (`internal/telemetry.ts`), and `isEmptySources` into
+  `internal/source.ts` — removing ~157 lines of copy-paste across race/fallback/merge.
+- Collapsed the byte-identical `wireOverallTimeout` / `createTtfUsableTimer` into a
+  single `armTimer` that now **removes its abort listeners on disarm** (timer-leak
+  fix for fast-completing ops).
+- `internal/source.ts` — release the `ReadableStream` reader lock on natural
+  completion instead of pinning it for the operation's lifetime.
+- Dropped the unused `_postCommitFailover` parameter in the fallback engine.
+- Removed dead `abortedByOverallTimeout` helper (`internal/timeouts.ts`) — no caller.
+
 ## [1.0.0]
 
 ### Added
